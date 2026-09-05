@@ -501,6 +501,14 @@ INSERT INTO DONOR (Name, DOB, BloodGroup, Contact, Email, Address, RegistrationD
 VALUES ('Dilani Wickramasinghe', TO_DATE('2001-11-05', 'YYYY-MM-DD'), 'B+', '+94703456789', 'dilani@mail.com', 'Matara', SYSDATE - 60, 'ACTIVE');
 INSERT INTO DONOR (Name, DOB, BloodGroup, Contact, Email, Address, RegistrationDate, Status) 
 VALUES ('Roshan Alwis', TO_DATE('1990-02-18', 'YYYY-MM-DD'), 'AB+', '+94704567890', 'roshan@mail.com', 'Colombo 03', SYSDATE - 30, 'ACTIVE');
+INSERT INTO DONOR (Name, DOB, BloodGroup, Contact, Email, Address, RegistrationDate, Status) 
+VALUES ('Malith Ranasinghe', TO_DATE('1992-06-14', 'YYYY-MM-DD'), 'B+', '+94705678901', 'malith@mail.com', 'Rajagiriya', SYSDATE - 25, 'ACTIVE');
+INSERT INTO DONOR (Name, DOB, BloodGroup, Contact, Email, Address, RegistrationDate, Status) 
+VALUES ('Tharushi Dissanayake', TO_DATE('1997-09-30', 'YYYY-MM-DD'), 'O-', '+94706789012', 'tharushi@mail.com', 'Kandy', SYSDATE - 20, 'ACTIVE');
+INSERT INTO DONOR (Name, DOB, BloodGroup, Contact, Email, Address, RegistrationDate, Status) 
+VALUES ('Kasun Jayawardena', TO_DATE('1993-12-08', 'YYYY-MM-DD'), 'A+', '+94707890123', 'kasun@mail.com', 'Maharagama', SYSDATE - 15, 'ACTIVE');
+INSERT INTO DONOR (Name, DOB, BloodGroup, Contact, Email, Address, RegistrationDate, Status) 
+VALUES ('Priyantha Senanayake', TO_DATE('1988-03-22', 'YYYY-MM-DD'), 'B-', '+94708901234', 'priyantha@mail.com', 'Galle Fort', SYSDATE - 10, 'ACTIVE');
 
 -- Insert Health Checks
 -- Saman (Eligible)
@@ -515,6 +523,18 @@ VALUES (3, SYSDATE - 2, 48.0, '110/70', 11.2, 'N', 'Low Hemoglobin (<12.5 g/dL)'
 -- Roshan (Eligible)
 INSERT INTO DONOR_HEALTH (DonorID, CheckDate, Weight, BloodPressure, Hemoglobin, Eligible, DeferralReason, CheckedBy) 
 VALUES (4, SYSDATE - 1, 82.0, '130/85', 15.0, 'Y', NULL, 1);
+-- Malith (Eligible)
+INSERT INTO DONOR_HEALTH (DonorID, CheckDate, Weight, BloodPressure, Hemoglobin, Eligible, DeferralReason, CheckedBy) 
+VALUES (5, SYSDATE - 8, 71.0, '118/78', 14.5, 'Y', NULL, 1);
+-- Tharushi (Eligible)
+INSERT INTO DONOR_HEALTH (DonorID, CheckDate, Weight, BloodPressure, Hemoglobin, Eligible, DeferralReason, CheckedBy) 
+VALUES (6, SYSDATE - 2, 55.0, '115/75', 13.0, 'Y', NULL, 2);
+-- Kasun (Eligible)
+INSERT INTO DONOR_HEALTH (DonorID, CheckDate, Weight, BloodPressure, Hemoglobin, Eligible, DeferralReason, CheckedBy) 
+VALUES (7, SYSDATE - 7, 76.0, '122/80', 15.2, 'Y', NULL, 1);
+-- Priyantha (Eligible)
+INSERT INTO DONOR_HEALTH (DonorID, CheckDate, Weight, BloodPressure, Hemoglobin, Eligible, DeferralReason, CheckedBy) 
+VALUES (8, SYSDATE - 3, 68.0, '120/80', 14.1, 'Y', NULL, 2);
 
 -- Insert Donations (Trigger TRG_CHECK_ELIGIBILITY verifies eligibility)
 INSERT INTO DONATION (DonorID, HealthID, CampID, DonationDate, UnitsDonated, Status) 
@@ -523,6 +543,14 @@ INSERT INTO DONATION (DonorID, HealthID, CampID, DonationDate, UnitsDonated, Sta
 VALUES (2, 2, 2, SYSDATE - 2, 1, 'COMPLETED');
 INSERT INTO DONATION (DonorID, HealthID, CampID, DonationDate, UnitsDonated, Status) 
 VALUES (4, 4, 2, SYSDATE - 1, 1, 'COMPLETED');
+INSERT INTO DONATION (DonorID, HealthID, CampID, DonationDate, UnitsDonated, Status) 
+VALUES (5, 5, 1, SYSDATE - 8, 1, 'COMPLETED');
+INSERT INTO DONATION (DonorID, HealthID, CampID, DonationDate, UnitsDonated, Status) 
+VALUES (6, 6, 2, SYSDATE - 2, 1, 'COMPLETED');
+INSERT INTO DONATION (DonorID, HealthID, CampID, DonationDate, UnitsDonated, Status) 
+VALUES (7, 7, 1, SYSDATE - 7, 1, 'COMPLETED');
+INSERT INTO DONATION (DonorID, HealthID, CampID, DonationDate, UnitsDonated, Status) 
+VALUES (8, 8, NULL, SYSDATE - 3, 1, 'COMPLETED'); -- Central Walk-in
 
 -- Insert Blood Units (Trigger TRG_SET_UNIT_EXPIRY computes ExpiryDate automatically)
 INSERT INTO BLOOD_UNIT (DonationID, BloodGroup, ComponentType, CollectionDate, ExpiryDate, Volume_ml, Status, StorageLocation) 
@@ -533,18 +561,34 @@ INSERT INTO BLOOD_UNIT (DonationID, BloodGroup, ComponentType, CollectionDate, E
 VALUES (2, 'A-', 'RED_CELLS', SYSDATE - 2, NULL, 300, 'AVAILABLE', 'FRIDGE-B-SHELF-2');
 INSERT INTO BLOOD_UNIT (DonationID, BloodGroup, ComponentType, CollectionDate, ExpiryDate, Volume_ml, Status, StorageLocation) 
 VALUES (3, 'AB+', 'WHOLE_BLOOD', SYSDATE - 1, NULL, 450, 'AVAILABLE', 'FRIDGE-A-SHELF-3');
+INSERT INTO BLOOD_UNIT (DonationID, BloodGroup, ComponentType, CollectionDate, ExpiryDate, Volume_ml, Status, StorageLocation) 
+VALUES (4, 'B+', 'WHOLE_BLOOD', SYSDATE - 8, NULL, 450, 'AVAILABLE', 'FRIDGE-B-SHELF-1');
+INSERT INTO BLOOD_UNIT (DonationID, BloodGroup, ComponentType, CollectionDate, ExpiryDate, Volume_ml, Status, StorageLocation) 
+VALUES (5, 'O-', 'RED_CELLS', SYSDATE - 2, NULL, 300, 'AVAILABLE', 'FRIDGE-C-SHELF-1'); -- Universal Donor RBC
+INSERT INTO BLOOD_UNIT (DonationID, BloodGroup, ComponentType, CollectionDate, ExpiryDate, Volume_ml, Status, StorageLocation) 
+VALUES (5, 'O-', 'PLASMA', SYSDATE - 2, NULL, 250, 'AVAILABLE', 'DEEP-FREEZE-1');
+INSERT INTO BLOOD_UNIT (DonationID, BloodGroup, ComponentType, CollectionDate, ExpiryDate, Volume_ml, Status, StorageLocation) 
+VALUES (6, 'A+', 'WHOLE_BLOOD', SYSDATE - 7, NULL, 450, 'AVAILABLE', 'FRIDGE-A-SHELF-2');
+INSERT INTO BLOOD_UNIT (DonationID, BloodGroup, ComponentType, CollectionDate, ExpiryDate, Volume_ml, Status, StorageLocation) 
+VALUES (6, 'A+', 'PLATELETS', SYSDATE - 1, NULL, 250, 'AVAILABLE', 'AGITATOR-02'); -- Near expiry
+INSERT INTO BLOOD_UNIT (DonationID, BloodGroup, ComponentType, CollectionDate, ExpiryDate, Volume_ml, Status, StorageLocation) 
+VALUES (7, 'B-', 'WHOLE_BLOOD', SYSDATE - 3, NULL, 450, 'AVAILABLE', 'FRIDGE-B-SHELF-3');
 
 -- Insert Hospitals
 INSERT INTO HOSPITAL (Name, Location, Contact, Email) 
 VALUES ('National Hospital Sri Lanka', 'Colombo 10', '+94112691111', 'bloodbank@nhsl.health.lk');
 INSERT INTO HOSPITAL (Name, Location, Contact, Email) 
 VALUES ('Teaching Hospital Karapitiya', 'Galle', '+94912232250', 'karapitiya.store@health.lk');
+INSERT INTO HOSPITAL (Name, Location, Contact, Email) 
+VALUES ('Lady Ridgeway Hospital for Children', 'Colombo 08', '+94112693711', 'bloodbank@lrh.health.lk');
 
 -- Insert Hospital Requests
 INSERT INTO BLOOD_REQUEST (HospitalID, RequestDate, RequiredDate, Priority, Status, RequestedBy) 
 VALUES (1, CURRENT_TIMESTAMP, SYSDATE + 2, 'CRITICAL', 'PENDING', 'Dr. Senaka');
 INSERT INTO BLOOD_REQUEST (HospitalID, RequestDate, RequiredDate, Priority, Status, RequestedBy) 
 VALUES (2, CURRENT_TIMESTAMP, SYSDATE + 5, 'NORMAL', 'PENDING', 'Dr. Priyantha');
+INSERT INTO BLOOD_REQUEST (HospitalID, RequestDate, RequiredDate, Priority, Status, RequestedBy) 
+VALUES (3, CURRENT_TIMESTAMP, SYSDATE + 1, 'CRITICAL', 'PENDING', 'Dr. Kumari');
 
 -- Insert Requisition Items
 INSERT INTO REQUEST_ITEM (RequestID, BloodGroup, ComponentType, UnitsRequested, UnitsFulfilled) 
@@ -553,7 +597,13 @@ INSERT INTO REQUEST_ITEM (RequestID, BloodGroup, ComponentType, UnitsRequested, 
 VALUES (1, 'A-', 'RED_CELLS', 1, 0);
 INSERT INTO REQUEST_ITEM (RequestID, BloodGroup, ComponentType, UnitsRequested, UnitsFulfilled) 
 VALUES (2, 'AB+', 'WHOLE_BLOOD', 1, 0);
+INSERT INTO REQUEST_ITEM (RequestID, BloodGroup, ComponentType, UnitsRequested, UnitsFulfilled) 
+VALUES (3, 'O-', 'RED_CELLS', 1, 0);
+INSERT INTO REQUEST_ITEM (RequestID, BloodGroup, ComponentType, UnitsRequested, UnitsFulfilled) 
+VALUES (3, 'B+', 'WHOLE_BLOOD', 1, 0);
 
 -- Distribute 1 Unit (Trigger TRG_AFTER_DISTRIBUTION updates inventory and request progress)
 INSERT INTO DISTRIBUTION (RequestItemID, UnitID, StaffID, DistributionDate, Notes) 
 VALUES (1, 1, 3, CURRENT_TIMESTAMP, 'Dispatched via emergency ambulance');
+
+COMMIT;

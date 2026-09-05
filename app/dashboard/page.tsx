@@ -24,6 +24,7 @@ interface ReportOption {
     description: string;
     defaultParam?: string;
     paramLabel?: string;
+    quickPresets?: Array<{ label: string; value: string }>;
 }
 
 const REPORTS: ReportOption[] = [
@@ -37,7 +38,13 @@ const REPORTS: ReportOption[] = [
         name: 'Report 2: Expiring Inventory',
         description: 'Predictive forecast of blood units expiring within specified days.',
         defaultParam: '30',
-        paramLabel: 'Days Threshold',
+        paramLabel: 'Days Ahead',
+        quickPresets: [
+            { label: '7 Days (Immediate)', value: '7' },
+            { label: '14 Days', value: '14' },
+            { label: '30 Days (Standard)', value: '30' },
+            { label: '60 Days', value: '60' },
+        ],
     },
     {
         id: 'donor-history',
@@ -45,6 +52,13 @@ const REPORTS: ReportOption[] = [
         description: 'Clinical vitals, eligibility logs, and donation history for a donor.',
         defaultParam: '1',
         paramLabel: 'Donor ID',
+        quickPresets: [
+            { label: '#1 Saman (O+)', value: '1' },
+            { label: '#2 Anura (A-)', value: '2' },
+            { label: '#3 Dilani (Deferred)', value: '3' },
+            { label: '#4 Roshan (AB+)', value: '4' },
+            { label: '#5 Malith (B+)', value: '5' },
+        ],
     },
     {
         id: 'hospital-fulfillment',
@@ -79,15 +93,16 @@ export default function DashboardPage() {
         }
     }, [selectedReport]);
 
-    const fetchReport = async () => {
+    const fetchReport = async (overrideParam?: string) => {
         setLoading(true);
         setError(null);
         try {
+            const currentParam = overrideParam !== undefined ? overrideParam : paramValue;
             let url = `/api/reports/${selectedReport}`;
-            if (selectedReport === 'expiring-inventory' && paramValue) {
-                url += `?days=${paramValue}`;
-            } else if (selectedReport === 'donor-history' && paramValue) {
-                url += `?donorId=${paramValue}`;
+            if (selectedReport === 'expiring-inventory' && currentParam) {
+                url += `?days=${currentParam}`;
+            } else if (selectedReport === 'donor-history' && currentParam) {
+                url += `?donorId=${currentParam}`;
             }
 
             const res = await fetch(url);
@@ -225,7 +240,7 @@ export default function DashboardPage() {
                         )}
 
                         <button
-                            onClick={fetchReport}
+                            onClick={() => fetchReport()}
                             disabled={loading}
                             className="flex items-center gap-2 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg transition"
                         >
@@ -234,6 +249,36 @@ export default function DashboardPage() {
                         </button>
                     </div>
                 </div>
+
+                {/* 1-Click Parameter Quick-Select Helpers */}
+                {activeConfig?.quickPresets && (
+                    <div className="pt-4 pb-1 border-b border-slate-800/70 flex flex-wrap items-center gap-2 text-xs">
+                        <span className="text-slate-400 font-semibold flex items-center gap-1.5 mr-1">
+                            <Sparkles className="h-3.5 w-3.5 text-rose-400" />
+                            1-Click Presets:
+                        </span>
+                        {activeConfig.quickPresets.map((preset) => {
+                            const isSelected = paramValue === preset.value;
+                            return (
+                                <button
+                                    key={preset.value}
+                                    type="button"
+                                    onClick={() => {
+                                        setParamValue(preset.value);
+                                        fetchReport(preset.value);
+                                    }}
+                                    className={`px-3 py-1.5 rounded-lg border font-medium transition ${
+                                        isSelected
+                                            ? 'bg-rose-600 text-white border-rose-500 shadow-sm'
+                                            : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'
+                                    }`}
+                                >
+                                    {preset.label}
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
 
                 {/* Dynamic Table Output */}
                 <div className="mt-6 overflow-x-auto">
