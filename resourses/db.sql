@@ -430,3 +430,110 @@ CREATE OR REPLACE PACKAGE BODY LIFELINE_REPORTS_PKG AS
 END LIFELINE_REPORTS_PKG;
 /
 COMMIT;
+----------------------------------------------------------------
+-- INSERT SAMPLE DATA
+----------------------------------------------------------------
+
+-- Insert Venues
+INSERT INTO VENUE (Name, Address, City, Capacity, Contact) 
+VALUES ('Town Hall Community Center', '120 Galle Road', 'Colombo', 250, '+94112345678');
+INSERT INTO VENUE (Name, Address, City, Capacity, Contact) 
+VALUES ('Youth Council Auditorium', '45 Kandy Road', 'Kandy', 180, '+94812345678');
+INSERT INTO VENUE (Name, Address, City, Capacity, Contact) 
+VALUES ('Southern Sports Complex', '12 Matara Road', 'Galle', 300, '+94912345678');
+
+-- Insert Staff
+INSERT INTO STAFF (Name, Role, Contact, Email, Status) 
+VALUES ('Dr. Nihal Senaratne', 'Medical Officer', '+94771112233', 'nihal@lifeline.lk', 'ACTIVE');
+INSERT INTO STAFF (Name, Role, Contact, Email, Status) 
+VALUES ('Sister Malkanthi Perera', 'Head Phlebotomist', '+94772223344', 'malkanthi@lifeline.lk', 'ACTIVE');
+INSERT INTO STAFF (Name, Role, Contact, Email, Status) 
+VALUES ('Kavinda Jayasuriya', 'Inventory Manager', '+94773334455', 'kavinda@lifeline.lk', 'ACTIVE');
+
+-- Insert Volunteers
+INSERT INTO VOLUNTEER (Name, Contact, Email, Skills, Status) 
+VALUES ('Chamath Fernando', '+94715556677', 'chamath@gmail.com', 'Donor Registration, First Aid', 'ACTIVE');
+INSERT INTO VOLUNTEER (Name, Contact, Email, Skills, Status) 
+VALUES ('Dinuka Silva', '+94716667788', 'dinuka@gmail.com', 'Crowd Management, Logistics', 'ACTIVE');
+
+-- Insert Camps
+INSERT INTO CAMP (Name, VenueID, StartDate, EndDate, TargetUnits, Status, OrganizerID) 
+VALUES ('Rotary Club Youth Drive', 1, SYSDATE - 10, SYSDATE - 9, 60, 'COMPLETED', 1);
+INSERT INTO CAMP (Name, VenueID, StartDate, EndDate, TargetUnits, Status, OrganizerID) 
+VALUES ('Kandy Central Blood Drive', 2, SYSDATE - 2, SYSDATE - 1, 40, 'ACTIVE', 1);
+INSERT INTO CAMP (Name, VenueID, StartDate, EndDate, TargetUnits, Status, OrganizerID) 
+VALUES ('Southern Coastal Blood Camp', 3, SYSDATE + 7, SYSDATE + 8, 80, 'PLANNED', 3);
+
+-- Link Staff & Volunteers to Camps
+INSERT INTO CAMP_STAFF (CampID, StaffID, Role) VALUES (1, 1, 'Medical Supervisor');
+INSERT INTO CAMP_STAFF (CampID, StaffID, Role) VALUES (1, 2, 'Lead Phlebotomist');
+INSERT INTO CAMP_STAFF (CampID, StaffID, Role) VALUES (2, 2, 'Phlebotomist');
+
+INSERT INTO CAMP_VOLUNTEER (CampID, VolunteerID, Role) VALUES (1, 1, 'Reception Desk');
+INSERT INTO CAMP_VOLUNTEER (CampID, VolunteerID, Role) VALUES (2, 2, 'Refreshment Logistics');
+
+-- Insert Donors
+INSERT INTO DONOR (Name, DOB, BloodGroup, Contact, Email, Address, RegistrationDate, Status) 
+VALUES ('Saman Kumara', TO_DATE('1995-04-12', 'YYYY-MM-DD'), 'O+', '+94701234567', 'saman@mail.com', 'Nugegoda', SYSDATE - 120, 'ACTIVE');
+INSERT INTO DONOR (Name, DOB, BloodGroup, Contact, Email, Address, RegistrationDate, Status) 
+VALUES ('Anura Bandara', TO_DATE('1998-08-23', 'YYYY-MM-DD'), 'A-', '+94702345678', 'anura@mail.com', 'Peradeniya', SYSDATE - 90, 'ACTIVE');
+INSERT INTO DONOR (Name, DOB, BloodGroup, Contact, Email, Address, RegistrationDate, Status) 
+VALUES ('Dilani Wickramasinghe', TO_DATE('2001-11-05', 'YYYY-MM-DD'), 'B+', '+94703456789', 'dilani@mail.com', 'Matara', SYSDATE - 60, 'ACTIVE');
+INSERT INTO DONOR (Name, DOB, BloodGroup, Contact, Email, Address, RegistrationDate, Status) 
+VALUES ('Roshan Alwis', TO_DATE('1990-02-18', 'YYYY-MM-DD'), 'AB+', '+94704567890', 'roshan@mail.com', 'Colombo 03', SYSDATE - 30, 'ACTIVE');
+
+-- Insert Health Checks
+-- Saman (Eligible)
+INSERT INTO DONOR_HEALTH (DonorID, CheckDate, Weight, BloodPressure, Hemoglobin, Eligible, DeferralReason, CheckedBy) 
+VALUES (1, SYSDATE - 10, 68.5, '120/80', 14.2, 'Y', NULL, 1);
+-- Anura (Eligible)
+INSERT INTO DONOR_HEALTH (DonorID, CheckDate, Weight, BloodPressure, Hemoglobin, Eligible, DeferralReason, CheckedBy) 
+VALUES (2, SYSDATE - 2, 74.0, '125/82', 13.8, 'Y', NULL, 1);
+-- Dilani (Deferred - Low Hemoglobin)
+INSERT INTO DONOR_HEALTH (DonorID, CheckDate, Weight, BloodPressure, Hemoglobin, Eligible, DeferralReason, CheckedBy) 
+VALUES (3, SYSDATE - 2, 48.0, '110/70', 11.2, 'N', 'Low Hemoglobin (<12.5 g/dL)', 1);
+-- Roshan (Eligible)
+INSERT INTO DONOR_HEALTH (DonorID, CheckDate, Weight, BloodPressure, Hemoglobin, Eligible, DeferralReason, CheckedBy) 
+VALUES (4, SYSDATE - 1, 82.0, '130/85', 15.0, 'Y', NULL, 1);
+
+-- Insert Donations (Trigger TRG_CHECK_ELIGIBILITY verifies eligibility)
+INSERT INTO DONATION (DonorID, HealthID, CampID, DonationDate, UnitsDonated, Status) 
+VALUES (1, 1, 1, SYSDATE - 10, 1, 'COMPLETED');
+INSERT INTO DONATION (DonorID, HealthID, CampID, DonationDate, UnitsDonated, Status) 
+VALUES (2, 2, 2, SYSDATE - 2, 1, 'COMPLETED');
+INSERT INTO DONATION (DonorID, HealthID, CampID, DonationDate, UnitsDonated, Status) 
+VALUES (4, 4, 2, SYSDATE - 1, 1, 'COMPLETED');
+
+-- Insert Blood Units (Trigger TRG_SET_UNIT_EXPIRY computes ExpiryDate automatically)
+INSERT INTO BLOOD_UNIT (DonationID, BloodGroup, ComponentType, CollectionDate, ExpiryDate, Volume_ml, Status, StorageLocation) 
+VALUES (1, 'O+', 'WHOLE_BLOOD', SYSDATE - 10, NULL, 450, 'AVAILABLE', 'FRIDGE-A-SHELF-1');
+INSERT INTO BLOOD_UNIT (DonationID, BloodGroup, ComponentType, CollectionDate, ExpiryDate, Volume_ml, Status, StorageLocation) 
+VALUES (1, 'O+', 'PLATELETS', SYSDATE - 2, NULL, 250, 'AVAILABLE', 'AGITATOR-01'); -- Short expiry demo
+INSERT INTO BLOOD_UNIT (DonationID, BloodGroup, ComponentType, CollectionDate, ExpiryDate, Volume_ml, Status, StorageLocation) 
+VALUES (2, 'A-', 'RED_CELLS', SYSDATE - 2, NULL, 300, 'AVAILABLE', 'FRIDGE-B-SHELF-2');
+INSERT INTO BLOOD_UNIT (DonationID, BloodGroup, ComponentType, CollectionDate, ExpiryDate, Volume_ml, Status, StorageLocation) 
+VALUES (3, 'AB+', 'WHOLE_BLOOD', SYSDATE - 1, NULL, 450, 'AVAILABLE', 'FRIDGE-A-SHELF-3');
+
+-- Insert Hospitals
+INSERT INTO HOSPITAL (Name, Location, Contact, Email) 
+VALUES ('National Hospital Sri Lanka', 'Colombo 10', '+94112691111', 'bloodbank@nhsl.health.lk');
+INSERT INTO HOSPITAL (Name, Location, Contact, Email) 
+VALUES ('Teaching Hospital Karapitiya', 'Galle', '+94912232250', 'karapitiya.store@health.lk');
+
+-- Insert Hospital Requests
+INSERT INTO BLOOD_REQUEST (HospitalID, RequestDate, RequiredDate, Priority, Status, RequestedBy) 
+VALUES (1, CURRENT_TIMESTAMP, SYSDATE + 2, 'CRITICAL', 'PENDING', 'Dr. Senaka');
+INSERT INTO BLOOD_REQUEST (HospitalID, RequestDate, RequiredDate, Priority, Status, RequestedBy) 
+VALUES (2, CURRENT_TIMESTAMP, SYSDATE + 5, 'NORMAL', 'PENDING', 'Dr. Priyantha');
+
+-- Insert Requisition Items
+INSERT INTO REQUEST_ITEM (RequestID, BloodGroup, ComponentType, UnitsRequested, UnitsFulfilled) 
+VALUES (1, 'O+', 'WHOLE_BLOOD', 2, 0);
+INSERT INTO REQUEST_ITEM (RequestID, BloodGroup, ComponentType, UnitsRequested, UnitsFulfilled) 
+VALUES (1, 'A-', 'RED_CELLS', 1, 0);
+INSERT INTO REQUEST_ITEM (RequestID, BloodGroup, ComponentType, UnitsRequested, UnitsFulfilled) 
+VALUES (2, 'AB+', 'WHOLE_BLOOD', 1, 0);
+
+-- Distribute 1 Unit (Trigger TRG_AFTER_DISTRIBUTION updates inventory and request progress)
+INSERT INTO DISTRIBUTION (RequestItemID, UnitID, StaffID, DistributionDate, Notes) 
+VALUES (1, 1, 3, CURRENT_TIMESTAMP, 'Dispatched via emergency ambulance');
