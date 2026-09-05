@@ -251,6 +251,26 @@ EXCEPTION
 END;
 /
 
+-- Trigger 4: Autonomous Clinical Eligibility Evaluation
+CREATE OR REPLACE TRIGGER TRG_EVALUATE_DONOR_HEALTH
+BEFORE INSERT OR UPDATE ON DONOR_HEALTH
+FOR EACH ROW
+BEGIN
+    -- Rule 1: Donor body weight must be >= 50.0 kg
+    IF :NEW.Weight < 50.0 THEN
+        :NEW.Eligible := 'N';
+        :NEW.DeferralReason := 'Underweight: Body weight (' || :NEW.Weight || ' kg) below clinical minimum 50 kg';
+    -- Rule 2: Minimum hemoglobin must be >= 12.5 g/dL
+    ELSIF :NEW.Hemoglobin < 12.5 THEN
+        :NEW.Eligible := 'N';
+        :NEW.DeferralReason := 'Low Hemoglobin: Measured ' || :NEW.Hemoglobin || ' g/dL (minimum 12.5 g/dL required)';
+    ELSE
+        :NEW.Eligible := 'Y';
+        :NEW.DeferralReason := NULL;
+    END IF;
+END;
+/
+
 
 -- PL/SQL PACKAGE FOR 5 BUSINESS REPORTS
 

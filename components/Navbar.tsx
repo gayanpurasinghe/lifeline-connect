@@ -2,17 +2,18 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Activity, AlertTriangle, Calendar, Heart, Truck } from 'lucide-react';
+import { Activity, AlertTriangle, Calendar, Heart, Truck, BookOpen } from 'lucide-react';
 
 export default function Navbar() {
     const pathname = usePathname();
 
     const navItems = [
-        { name: 'Dashboard (Oracle)', href: '/dashboard', icon: Activity },
-        { name: 'Camps & Feedback', href: '/camps', icon: Calendar },
+        { name: 'Dashboard', href: '/dashboard', icon: Activity },
+        { name: 'Camps & Rosters', href: '/camps', icon: Calendar },
         { name: 'Donors & Intake', href: '/donors', icon: Heart },
-        { name: 'Distribution & Stock', href: '/distribution', icon: Truck },
-        { name: 'Emergency Appeals (MongoDB)', href: '/appeals', icon: AlertTriangle },
+        { name: 'Distribution', href: '/distribution', icon: Truck },
+        { name: 'Emergency Appeals', href: '/appeals', icon: AlertTriangle },
+        { name: 'Media & Guides', href: '/media', icon: BookOpen },
     ];
 
     return (
