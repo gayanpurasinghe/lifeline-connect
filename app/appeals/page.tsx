@@ -27,6 +27,7 @@ export default function AppealsPage() {
     const [appeals, setAppeals] = useState<Appeal[]>([]);
     const [loading, setLoading] = useState(true);
     const [filterGroup, setFilterGroup] = useState('');
+    const [keyword, setKeyword] = useState('');
 
     // Form State
     const [showModal, setShowModal] = useState(false);
@@ -42,7 +43,7 @@ export default function AppealsPage() {
     const loadAppeals = async () => {
         try {
             setLoading(true);
-            const url = filterGroup ? `/api/nosql/appeals?bloodGroup=${filterGroup}` : `/api/nosql/appeals`;
+            const url = `/api/nosql/appeals?bloodGroup=${filterGroup}&keyword=${encodeURIComponent(keyword)}`;
             const res = await fetch(url);
             const json = await res.json();
             if (json.success) setAppeals(json.data || []);
@@ -55,7 +56,7 @@ export default function AppealsPage() {
 
     useEffect(() => {
         loadAppeals();
-    }, [filterGroup]);
+    }, [filterGroup, keyword]);
 
     const handleCreateAppeal = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -119,6 +120,13 @@ export default function AppealsPage() {
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
+                    <input
+                        type="text"
+                        placeholder="Search hospital, city, or discussions..."
+                        value={keyword}
+                        onChange={(e) => setKeyword(e.target.value)}
+                        className="bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-lg px-3 py-2 w-64 focus:outline-none focus:border-rose-500"
+                    />
                     <select
                         value={filterGroup}
                         onChange={(e) => setFilterGroup(e.target.value)}

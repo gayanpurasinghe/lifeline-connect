@@ -18,7 +18,7 @@ export default function Navbar() {
     return (
         <nav className="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-50">
             <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-                <Link href="/dashboard" className="flex items-center gap-2 font-bold text-lg text-white">
+                <Link href="/" className="flex items-center gap-2 font-bold text-lg text-white">
                     <Heart className="h-6 w-6 text-rose-500 fill-rose-500" />
                     <span>LifeLine Connect</span>
                 </Link>
@@ -31,8 +31,8 @@ export default function Navbar() {
                                 key={item.href}
                                 href={item.href}
                                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition ${isActive
-                                        ? 'bg-rose-600 text-white shadow-sm'
-                                        : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                                    ? 'bg-rose-600 text-white shadow-sm'
+                                    : 'text-slate-400 hover:text-white hover:bg-slate-900'
                                     }`}
                             >
                                 <Icon className="h-4 w-4" />

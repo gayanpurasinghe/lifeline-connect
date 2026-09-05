@@ -9,14 +9,22 @@ export async function GET(request: NextRequest) {
         await connectMongo();
         const { searchParams } = request.nextUrl;
         const bloodGroup = searchParams.get('bloodGroup');
+        const keyword = searchParams.get('keyword');
 
-        // Filter by required blood type if provided, otherwise retrieve all active
-        const query: any = { isActive: true };
-        if (bloodGroup) {
-            query.bloodGroup = bloodGroup;
+        const filter: any = {};
+        if (bloodGroup) filter.bloodGroup = bloodGroup;
+
+        if (keyword && keyword.trim() !== '') {
+            const regex = new RegExp(keyword.trim(), 'i');
+            filter.$or = [
+                { hospitalName: regex },
+                { location: regex },
+                { 'comments.message': regex },
+                { 'comments.authorName': regex },
+            ];
         }
 
-        let appeals = await Appeal.find(query).sort({ createdAt: -1 }).lean();
+        const appeals = await Appeal.find(filter).sort({ createdAt: -1 }).lean();
         return NextResponse.json({ success: true, count: appeals.length, data: appeals });
     } catch (error: any) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
