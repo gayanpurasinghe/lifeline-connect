@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Activity, AlertTriangle, Calendar, Heart } from 'lucide-react';
+import { Activity, AlertTriangle, Calendar, Heart, Truck } from 'lucide-react';
 
 export default function Navbar() {
     const pathname = usePathname();
@@ -10,6 +10,8 @@ export default function Navbar() {
     const navItems = [
         { name: 'Dashboard (Oracle)', href: '/dashboard', icon: Activity },
         { name: 'Camps & Feedback', href: '/camps', icon: Calendar },
+        { name: 'Donors & Intake', href: '/donors', icon: Heart },
+        { name: 'Distribution & Stock', href: '/distribution', icon: Truck },
         { name: 'Emergency Appeals (MongoDB)', href: '/appeals', icon: AlertTriangle },
     ];
 
@@ -29,8 +31,8 @@ export default function Navbar() {
                                 key={item.href}
                                 href={item.href}
                                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition ${isActive
-                                    ? 'bg-rose-600 text-white shadow-sm'
-                                    : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                                        ? 'bg-rose-600 text-white shadow-sm'
+                                        : 'text-slate-400 hover:text-white hover:bg-slate-900'
                                     }`}
                             >
                                 <Icon className="h-4 w-4" />
