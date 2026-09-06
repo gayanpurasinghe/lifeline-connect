@@ -123,12 +123,12 @@ The portal provides an intuitive, high-performance dark-themed management interf
 The relational schema consists of **14 normalized entities** in Third Normal Form (3NF), complete with Primary Keys, Foreign Keys, unique constraints, and check conditions:
 
 1. **VENUE**: Camp hosting facilities with capacity bounds.
-2. **STAFF**: Medical officers, phlebotomists, and administrators.
-3. **VOLUNTEER**: Community assistants tracked with contact details and skills.
+2. **STAFF**: Medical officers, phlebotomists, and administrators (Managed via **[Personnel Hub `/staff`](file:///c:/Users/gayan/OneDrive/Documents/EDU/NIBM/HDSE/sem-2/dm-2/Course_Work/lifeline-connect/app/staff/page.tsx)**).
+3. **VOLUNTEER**: Community assistants tracked with contact details and competencies (Managed via **[Personnel Hub `/staff`](file:///c:/Users/gayan/OneDrive/Documents/EDU/NIBM/HDSE/sem-2/dm-2/Course_Work/lifeline-connect/app/staff/page.tsx)**).
 4. **CAMP**: Blood donation drives with scheduled dates, organizers, and target quotas.
-5. **CAMP_STAFF**: M:N associative junction for medical staff camp rosters.
-6. **CAMP_VOLUNTEER**: M:N associative junction for volunteer duty assignments.
-7. **DONOR**: Voluntary donor profiles and blood group classifications.
+5. **CAMP_STAFF**: M:N associative junction for medical staff camp duty assignments (Managed & tracked via **[Personnel Hub `/staff`](file:///c:/Users/gayan/OneDrive/Documents/EDU/NIBM/HDSE/sem-2/dm-2/Course_Work/lifeline-connect/app/staff/page.tsx)** & **[Camps & Rosters `/camps`](file:///c:/Users/gayan/OneDrive/Documents/EDU/NIBM/HDSE/sem-2/dm-2/Course_Work/lifeline-connect/app/camps/page.tsx)**).
+6. **CAMP_VOLUNTEER**: M:N associative junction for community volunteer duty assignments (Managed & tracked via **[Personnel Hub `/staff`](file:///c:/Users/gayan/OneDrive/Documents/EDU/NIBM/HDSE/sem-2/dm-2/Course_Work/lifeline-connect/app/staff/page.tsx)** & **[Camps & Rosters `/camps`](file:///c:/Users/gayan/OneDrive/Documents/EDU/NIBM/HDSE/sem-2/dm-2/Course_Work/lifeline-connect/app/camps/page.tsx)**).
+7. **DONOR**: Voluntary donor profiles and blood groups (Managed via **[Donor Hub `/donors`](file:///c:/Users/gayan/OneDrive/Documents/EDU/NIBM/HDSE/sem-2/dm-2/Course_Work/lifeline-connect/app/donors/page.tsx)**).
 8. **DONOR_HEALTH**: Point-in-time clinical screenings (weight, hemoglobin, blood pressure).
 9. **DONATION**: Donation events; supports walk-ins (CampID = NULL) and mobile drives.
 10. **BLOOD_UNIT**: Serialized component inventory packets with auto-computed shelf life.

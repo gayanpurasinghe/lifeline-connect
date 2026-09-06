@@ -25,7 +25,8 @@ import {
     UserCheck,
     Stethoscope,
     Building2,
-    KeyRound
+    KeyRound,
+    Users
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { UserRole } from '@/lib/auth/session';
@@ -93,6 +94,14 @@ export default function Sidebar() {
                     icon: Heart,
                     badge: 'Triggers',
                     badgeColor: 'bg-emerald-950/80 text-emerald-300 border-emerald-800/80',
+                    allowedRoles: ['ADMIN', 'CLINICAL_STAFF', 'SCHEMA_OWNER'],
+                },
+                {
+                    name: 'Staff & Volunteers',
+                    href: '/staff',
+                    icon: Users,
+                    badge: 'Personnel',
+                    badgeColor: 'bg-cyan-950/80 text-cyan-300 border-cyan-800/80',
                     allowedRoles: ['ADMIN', 'CLINICAL_STAFF', 'SCHEMA_OWNER'],
                 },
                 {
