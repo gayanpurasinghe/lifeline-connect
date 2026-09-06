@@ -47,7 +47,7 @@ The solution integrates a **dual-database hybrid architecture**:
 The portal provides an intuitive, high-performance dark-themed management interface with a centralized left navigation bar, live database connectivity indicators, and sub-system modules:
 
 ### 1. Dual-Database Portal Dashboard & Subsystems
-> **Overview & Navigation Shell**: Central landing interface presenting live status indicators for Oracle Database 21c and MongoDB NoSQL, alongside quick-access cards to core operational subsystems.
+> **Overview & Navigation Shell**: Central landing interface presenting live status indicators for Oracle Database 21c and MongoDB NoSQL, alongside quick-access cards to core operational subsystems and active DBA session identity.
 
 ![Dual-Database Portal Dashboard](resourses/ScreenShots/01_portal_home_overview.png)
 
@@ -88,17 +88,17 @@ The portal provides an intuitive, high-performance dark-themed management interf
 
 ---
 
-### 7. Real-Time Emergency Appeals & Community Response Network
-> **MongoDB Nested Discussion Threads**: Urgent blood shortage broadcasts issued by regional hospitals, featuring live community response threads and donation pledges.
+### 7. Serialized Component Inventory & Auto-Computed Shelf Life
+> **Database Trigger Shelf Life Tracking (`TRG_SET_UNIT_EXPIRY`)**: Comprehensive component inventory dashboard displaying serialized unit batches, remaining days until expiry, storage compartments (e.g. Agitators, Specialized Cold Storage Fridges), and urgent expiration warning counters.
 
-![Emergency Blood Appeals with Discussion Threads](resourses/ScreenShots/07_emergency_appeals_discussion.png)
+![Available Inventory Units & Expiry Tracking](resourses/ScreenShots/07_inventory_units_shelflife.png)
 
 ---
 
-### 8. Hospital Emergency Broadcast Broadcast Modal
-> **Emergency Appeal Dispatch**: Rapid broadcast creation modal enabling hospital coordinators to alert regional voluntary donors for urgent whole blood, platelet, and red cell requirements.
+### 8. Real-Time Emergency Appeals & Community Response Network
+> **MongoDB Nested Discussion Threads**: Urgent blood shortage broadcasts issued by regional hospitals, featuring live community response threads, pledge logging, and real-time interaction.
 
-![Post Emergency Appeal Modal](resourses/ScreenShots/08_emergency_appeal_modal.png)
+![Emergency Blood Appeals with Discussion Threads](resourses/ScreenShots/08_emergency_appeals_discussion.png)
 
 ---
 
@@ -106,6 +106,14 @@ The portal provides an intuitive, high-performance dark-themed management interf
 > **Polymorphic NoSQL Document Store**: Flexible catalog for donor medical guidelines, nutrition pamphlets, and promotional awareness kits with varied schema metadata (color palettes, reading times, dietary rules).
 
 ![Campaign Media & Medical Guidelines](resourses/ScreenShots/09_campaign_media_guidelines.png)
+
+---
+
+### 10. Oracle 21c Database Authentication & Role-Based Access Control (RBAC)
+> **Direct Oracle PDB Security**: Examiners and users authenticate directly against Oracle Pluggable Database (`XEPDB1`) using database user accounts (`admin_user`, `staff_user`, `hospital_user`, `LIFELINE_CONNECT`). Features 1-click test credentials selector and dynamic role permission resolution (`USER_ROLE_PRIVS`).
+
+![Oracle 21c Database Authentication & RBAC Login](resourses/ScreenShots/10_oracle_pdb_rbac_login.png)
+
 
 
 ---
@@ -164,12 +172,17 @@ MongoDB serves as a complementary NoSQL database for unstructured and polymorphi
 ## 🔒 Database Administration & Security (RBAC)
 
 Located in `resourses/user.sql`:
-* **Schema Owner**: `LIFELINE_CONNECT` with quota and system privileges.
+* **Schema Owner**: `LIFELINE_CONNECT` with unlimited quota and administrative system privileges.
 * **Role-Based Access Control (RBAC)**:
   * **`RL_CLINICAL_STAFF`**: DML on `DONOR`, `DONOR_HEALTH`, `DONATION`, `BLOOD_UNIT`; read-only on `CAMP` and `VENUE`; execute on reports package.
   * **`RL_HOSPITAL_COORDINATOR`**: DML on `BLOOD_REQUEST`, `REQUEST_ITEM`, `DISTRIBUTION`; read-only on inventory.
   * **`RL_LIFELINE_ADMIN`**: Complete administrative control over all 14 schema tables and packages.
 * **User Accounts**: `admin_user`, `staff_user`, and `hospital_user` configured under the Principle of Least Privilege.
+* **Direct Oracle PDB Portal Authentication (`/login`)**:
+  * Users authenticate directly against Oracle Pluggable Database (`XEPDB1`) using their database credentials.
+  * The Next.js backend inspects granted roles via Oracle data dictionary (`USER_ROLE_PRIVS`).
+  * The portal navigation dynamically adapts: modules outside the user's role privilege are visually locked with an **RBAC Lock** indicator, demonstrating role enforcement in viva presentations.
+
 
 ### Disaster Recovery & Backup Plan
 * **Automated Backup**: [resourses/backup_strategy.bat](file:///c:/Users/gayan/OneDrive/Documents/EDU/NIBM/HDSE/sem-2/dm-2/Course_Work/lifeline-connect/resourses/backup_strategy.bat) exports the Oracle schema via Data Pump (`expdp`) and dumps MongoDB collections via `mongodump`.

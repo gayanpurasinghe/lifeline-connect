@@ -89,6 +89,11 @@ CREATE USER hospital_user IDENTIFIED BY "Hosp#2026";
 
 -- Grant basic session connection privilege
 GRANT CONNECT TO admin_user, staff_user, hospital_user;
+GRANT CREATE SESSION TO admin_user;
+GRANT CREATE SESSION TO staff_user;
+GRANT CREATE SESSION TO hospital_user;
+
+
 
 -- Assign designated roles 
 GRANT RL_LIFELINE_ADMIN TO admin_user;

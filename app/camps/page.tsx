@@ -14,7 +14,12 @@ import {
     Shield,
     CheckCircle2,
     Sparkles,
-    Briefcase
+    Briefcase,
+    PlusCircle,
+    X,
+    Building2,
+    Target,
+    AlertCircle
 } from 'lucide-react';
 
 interface Camp {
@@ -74,8 +79,24 @@ interface CampRoster {
     volunteers: CampVolunteerMember[];
 }
 
+interface VenueOption {
+    VENUEID: number;
+    NAME: string;
+    CITY: string;
+    ADDRESS: string;
+    CAPACITY?: number;
+}
+
+interface OrganizerOption {
+    STAFFID: number;
+    NAME: string;
+    ROLE: string;
+}
+
 export default function CampsPage() {
     const [camps, setCamps] = useState<Camp[]>([]);
+    const [venues, setVenues] = useState<VenueOption[]>([]);
+    const [organizers, setOrganizers] = useState<OrganizerOption[]>([]);
     const [topRated, setTopRated] = useState<TopRatedCamp[]>([]);
     const [reviewsByCamp, setReviewsByCamp] = useState<Record<number, ReviewItem[]>>({});
     const [rosterByCamp, setRosterByCamp] = useState<Record<number, CampRoster>>({});
@@ -89,6 +110,37 @@ export default function CampsPage() {
     const [waitingTime, setWaitingTime] = useState('15');
     const [submitting, setSubmitting] = useState(false);
 
+    // Schedule Camp Modal State
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [campName, setCampName] = useState('');
+    const [selectedVenueId, setSelectedVenueId] = useState('');
+    const [selectedOrganizerId, setSelectedOrganizerId] = useState('');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [targetUnits, setTargetUnits] = useState('50');
+    const [campStatus, setCampStatus] = useState('PLANNED');
+    const [scheduling, setScheduling] = useState(false);
+    const [scheduleBanner, setScheduleBanner] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+    // Venue Modal State
+    const [showVenueModal, setShowVenueModal] = useState(false);
+    const [venueName, setVenueName] = useState('');
+    const [venueAddress, setVenueAddress] = useState('');
+    const [venueCity, setVenueCity] = useState('');
+    const [venueCapacity, setVenueCapacity] = useState('200');
+    const [venueContact, setVenueContact] = useState('');
+    const [savingVenue, setSavingVenue] = useState(false);
+    const [venueBanner, setVenueBanner] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+    // Organizer (Staff) Modal State
+    const [showStaffModal, setShowStaffModal] = useState(false);
+    const [staffName, setStaffName] = useState('');
+    const [staffRole, setStaffRole] = useState('Medical Officer');
+    const [staffContact, setStaffContact] = useState('');
+    const [staffEmail, setStaffEmail] = useState('');
+    const [savingStaff, setSavingStaff] = useState(false);
+    const [staffBanner, setStaffBanner] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
     const fetchCamps = async () => {
         try {
             setLoading(true);
@@ -100,12 +152,153 @@ export default function CampsPage() {
             const campsJson = await campsRes.json();
             const topJson = await topRes.json();
 
-            if (campsJson.success) setCamps(campsJson.data || []);
+            if (campsJson.success) {
+                setCamps(campsJson.data || []);
+                setVenues(campsJson.venues || []);
+                setOrganizers(campsJson.organizers || []);
+            }
             if (topJson.success) setTopRated(topJson.data || []);
         } catch (err) {
             console.error('Failed to load camps:', err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const openCreateModal = () => {
+        const today = new Date().toISOString().split('T')[0];
+        setCampName('');
+        setSelectedVenueId(venues.length > 0 ? String(venues[0].VENUEID) : '');
+        setSelectedOrganizerId(organizers.length > 0 ? String(organizers[0].STAFFID) : '');
+        setStartDate(today);
+        setEndDate(today);
+        setTargetUnits('50');
+        setCampStatus('PLANNED');
+        setScheduleBanner(null);
+        setShowCreateModal(true);
+    };
+
+    const handleScheduleCamp = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setScheduling(true);
+        setScheduleBanner(null);
+
+        if (new Date(endDate) < new Date(startDate)) {
+            setScheduleBanner({
+                type: 'error',
+                message: 'End Date cannot be earlier than Start Date (enforced by CHK_CAMP_DATES).',
+            });
+            setScheduling(false);
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/camps', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: campName,
+                    venueId: selectedVenueId,
+                    organizerId: selectedOrganizerId,
+                    startDate,
+                    endDate,
+                    targetUnits,
+                    status: campStatus,
+                }),
+            });
+
+            const json = await res.json();
+            if (json.success) {
+                setScheduleBanner({ type: 'success', message: json.message });
+                await fetchCamps();
+                setTimeout(() => {
+                    setShowCreateModal(false);
+                }, 1400);
+            } else {
+                setScheduleBanner({ type: 'error', message: json.error || 'Failed to schedule camp.' });
+            }
+        } catch (err: any) {
+            setScheduleBanner({ type: 'error', message: err.message || 'Network error scheduling camp.' });
+        } finally {
+            setScheduling(false);
+        }
+    };
+
+    const handleAddVenue = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSavingVenue(true);
+        setVenueBanner(null);
+        try {
+            const res = await fetch('/api/venues', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: venueName,
+                    address: venueAddress,
+                    city: venueCity,
+                    capacity: venueCapacity,
+                    contact: venueContact,
+                }),
+            });
+            const json = await res.json();
+            if (json.success) {
+                setVenueBanner({ type: 'success', message: json.message });
+                setVenues((prev) => [...prev, json.venue]);
+                setSelectedVenueId(String(json.venue.VENUEID));
+                setTimeout(() => {
+                    setShowVenueModal(false);
+                    setVenueName('');
+                    setVenueAddress('');
+                    setVenueCity('');
+                    setVenueCapacity('200');
+                    setVenueContact('');
+                    setVenueBanner(null);
+                }, 1000);
+            } else {
+                setVenueBanner({ type: 'error', message: json.error || 'Failed to add venue.' });
+            }
+        } catch (err: any) {
+            setVenueBanner({ type: 'error', message: err.message || 'Network error.' });
+        } finally {
+            setSavingVenue(false);
+        }
+    };
+
+    const handleAddStaff = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSavingStaff(true);
+        setStaffBanner(null);
+        try {
+            const res = await fetch('/api/staff', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: staffName,
+                    role: staffRole,
+                    contact: staffContact,
+                    email: staffEmail,
+                }),
+            });
+            const json = await res.json();
+            if (json.success) {
+                setStaffBanner({ type: 'success', message: json.message });
+                setOrganizers((prev) => [...prev, json.staff]);
+                setSelectedOrganizerId(String(json.staff.STAFFID));
+                setTimeout(() => {
+                    setShowStaffModal(false);
+                    setStaffName('');
+                    setStaffRole('Medical Officer');
+                    setStaffContact('');
+                    setStaffEmail('');
+                    setStaffBanner(null);
+                }, 1000);
+            } else {
+                setStaffBanner({ type: 'error', message: json.error || 'Failed to add staff member.' });
+            }
+        } catch (err: any) {
+            setStaffBanner({ type: 'error', message: err.message || 'Network error.' });
+        } finally {
+            setSavingStaff(false);
         }
     };
 
@@ -200,6 +393,35 @@ export default function CampsPage() {
                             Oracle camp schedules & personnel assignments integrated with MongoDB donor satisfaction analytics
                         </p>
                     </div>
+                    <div className="flex flex-wrap items-center gap-2.5">
+                        <button
+                            onClick={() => {
+                                setVenueBanner(null);
+                                setShowVenueModal(true);
+                            }}
+                            className="flex items-center gap-1.5 bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs md:text-sm font-semibold px-3.5 py-2.5 rounded-xl border border-slate-700 transition active:scale-95 shadow"
+                        >
+                            <Building2 className="h-4 w-4 text-rose-400" />
+                            + Host Venue
+                        </button>
+                        <button
+                            onClick={() => {
+                                setStaffBanner(null);
+                                setShowStaffModal(true);
+                            }}
+                            className="flex items-center gap-1.5 bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs md:text-sm font-semibold px-3.5 py-2.5 rounded-xl border border-slate-700 transition active:scale-95 shadow"
+                        >
+                            <User className="h-4 w-4 text-rose-400" />
+                            + Organizer
+                        </button>
+                        <button
+                            onClick={openCreateModal}
+                            className="flex items-center gap-2 bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white text-xs md:text-sm font-semibold px-4 py-2.5 rounded-xl shadow-lg shadow-rose-950/50 border border-rose-500/30 transition transform active:scale-95"
+                        >
+                            <PlusCircle className="h-4 w-4" />
+                            Schedule Camp
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -279,13 +501,12 @@ export default function CampsPage() {
                                     <div className="flex items-start justify-between gap-2 mb-2">
                                         <div>
                                             <span
-                                                className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
-                                                    camp.STATUS === 'COMPLETED'
-                                                        ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
-                                                        : camp.STATUS === 'ACTIVE'
+                                                className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${camp.STATUS === 'COMPLETED'
+                                                    ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
+                                                    : camp.STATUS === 'ACTIVE'
                                                         ? 'bg-rose-950 text-rose-400 border border-rose-800 animate-pulse'
                                                         : 'bg-slate-800 text-slate-300'
-                                                }`}
+                                                    }`}
                                             >
                                                 {camp.STATUS}
                                             </span>
@@ -331,11 +552,10 @@ export default function CampsPage() {
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => toggleTab(camp.CAMPID, 'roster')}
-                                            className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition ${
-                                                activeTab === 'roster'
-                                                    ? 'bg-rose-600 text-white border-rose-500 shadow'
-                                                    : 'bg-slate-950 text-slate-300 border-slate-800 hover:text-white hover:border-slate-700'
-                                            }`}
+                                            className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition ${activeTab === 'roster'
+                                                ? 'bg-rose-600 text-white border-rose-500 shadow'
+                                                : 'bg-slate-950 text-slate-300 border-slate-800 hover:text-white hover:border-slate-700'
+                                                }`}
                                         >
                                             <Users className="h-3.5 w-3.5" />
                                             Personnel Roster (Oracle)
@@ -343,11 +563,10 @@ export default function CampsPage() {
 
                                         <button
                                             onClick={() => toggleTab(camp.CAMPID, 'reviews')}
-                                            className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition ${
-                                                activeTab === 'reviews'
-                                                    ? 'bg-amber-600 text-white border-amber-500 shadow'
-                                                    : 'bg-slate-950 text-slate-300 border-slate-800 hover:text-white hover:border-slate-700'
-                                            }`}
+                                            className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition ${activeTab === 'reviews'
+                                                ? 'bg-amber-600 text-white border-amber-500 shadow'
+                                                : 'bg-slate-950 text-slate-300 border-slate-800 hover:text-white hover:border-slate-700'
+                                                }`}
                                         >
                                             <MessageSquare className="h-3.5 w-3.5" />
                                             Donor Reviews (MongoDB)
@@ -497,6 +716,456 @@ export default function CampsPage() {
                             </div>
                         );
                     })}
+                </div>
+            )}
+
+            {/* Schedule New Camp Modal */}
+            {showCreateModal && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 max-w-xl w-full shadow-2xl relative my-8 animate-in fade-in zoom-in duration-200">
+                        <button
+                            onClick={() => setShowCreateModal(false)}
+                            className="absolute top-5 right-5 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
+                        >
+                            <X className="h-5 w-5" />
+                        </button>
+
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="p-2.5 rounded-xl bg-rose-950/80 border border-rose-800/80 text-rose-400">
+                                <PlusCircle className="h-6 w-6" />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-bold text-white">Schedule Donation Camp</h2>
+                            </div>
+                        </div>
+
+                        {scheduleBanner && (
+                            <div
+                                className={`mt-4 p-3 rounded-xl border flex items-center gap-2.5 text-xs ${scheduleBanner.type === 'success'
+                                    ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300'
+                                    : 'bg-red-950/60 border-red-800 text-red-300'
+                                    }`}
+                            >
+                                {scheduleBanner.type === 'success' ? (
+                                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
+                                ) : (
+                                    <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />
+                                )}
+                                <span>{scheduleBanner.message}</span>
+                            </div>
+                        )}
+
+                        <form onSubmit={handleScheduleCamp} className="mt-5 space-y-4 text-xs">
+                            <div>
+                                <label className="block text-slate-300 mb-1.5 font-semibold">
+                                    Camp Drive Name <span className="text-rose-500">*</span>
+                                </label>
+                                <input
+                                    required
+                                    type="text"
+                                    placeholder="e.g. Galle Fort Youth Mobile Blood Drive 2026"
+                                    value={campName}
+                                    onChange={(e) => setCampName(e.target.value)}
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-rose-500 transition"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <label className="text-slate-300 font-semibold flex items-center gap-1.5">
+                                            <Building2 className="h-3.5 w-3.5 text-rose-400" />
+                                            Host Venue <span className="text-rose-500">*</span>
+                                        </label>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setVenueBanner(null);
+                                                setShowVenueModal(true);
+                                            }}
+                                            className="text-[11px] text-rose-400 hover:text-rose-300 font-medium hover:underline flex items-center gap-0.5"
+                                        >
+                                            + Add Venue
+                                        </button>
+                                    </div>
+                                    <select
+                                        required
+                                        value={selectedVenueId}
+                                        onChange={(e) => setSelectedVenueId(e.target.value)}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-rose-500 transition"
+                                    >
+                                        <option value="" disabled>Select a registered venue</option>
+                                        {venues.map((v) => (
+                                            <option key={v.VENUEID} value={v.VENUEID}>
+                                                {v.NAME} ({v.CITY}){v.CAPACITY ? ` - Cap: ${v.CAPACITY}` : ''}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <label className="text-slate-300 font-semibold flex items-center gap-1.5">
+                                            <User className="h-3.5 w-3.5 text-rose-400" />
+                                            Lead Medical Organizer <span className="text-rose-500">*</span>
+                                        </label>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setStaffBanner(null);
+                                                setShowStaffModal(true);
+                                            }}
+                                            className="text-[11px] text-rose-400 hover:text-rose-300 font-medium hover:underline flex items-center gap-0.5"
+                                        >
+                                            + Add Organizer
+                                        </button>
+                                    </div>
+                                    <select
+                                        required
+                                        value={selectedOrganizerId}
+                                        onChange={(e) => setSelectedOrganizerId(e.target.value)}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-rose-500 transition"
+                                    >
+                                        <option value="" disabled>Select staff organizer</option>
+                                        {organizers.map((s) => (
+                                            <option key={s.STAFFID} value={s.STAFFID}>
+                                                {s.NAME} ({s.ROLE})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-slate-300 mb-1.5 font-semibold flex items-center gap-1.5">
+                                        <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                                        Start Date <span className="text-rose-500">*</span>
+                                    </label>
+                                    <input
+                                        required
+                                        type="date"
+                                        value={startDate}
+                                        onChange={(e) => setStartDate(e.target.value)}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-rose-500 transition"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-slate-300 mb-1.5 font-semibold flex items-center gap-1.5">
+                                        <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                                        End Date <span className="text-rose-500">*</span>
+                                    </label>
+                                    <input
+                                        required
+                                        type="date"
+                                        value={endDate}
+                                        onChange={(e) => setEndDate(e.target.value)}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-rose-500 transition"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-slate-300 mb-1.5 font-semibold flex items-center gap-1.5">
+                                        <Target className="h-3.5 w-3.5 text-rose-400" />
+                                        Target Quota (Units) <span className="text-rose-500">*</span>
+                                    </label>
+                                    <input
+                                        required
+                                        type="number"
+                                        min="1"
+                                        value={targetUnits}
+                                        onChange={(e) => setTargetUnits(e.target.value)}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 font-mono focus:outline-none focus:border-rose-500 transition"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-slate-300 mb-1.5 font-semibold">
+                                        Operational Status
+                                    </label>
+                                    <select
+                                        value={campStatus}
+                                        onChange={(e) => setCampStatus(e.target.value)}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-rose-500 transition"
+                                    >
+                                        <option value="PLANNED">PLANNED</option>
+                                        <option value="ACTIVE">ACTIVE</option>
+                                    </select>
+                                </div>
+                            </div>
+
+
+
+                            <div className="flex justify-end gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowCreateModal(false)}
+                                    className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={scheduling || !campName || !selectedVenueId || !selectedOrganizerId}
+                                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 disabled:opacity-50 text-white font-semibold flex items-center gap-2 shadow-lg shadow-rose-950/40 transition"
+                                >
+                                    {scheduling ? 'Scheduling in Oracle...' : 'Schedule Camp Drive'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Add Host Venue Modal */}
+            {showVenueModal && (
+                <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-[60] overflow-y-auto">
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 max-w-md w-full shadow-2xl relative my-8 animate-in fade-in zoom-in duration-200">
+                        <button
+                            onClick={() => setShowVenueModal(false)}
+                            className="absolute top-5 right-5 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
+                        >
+                            <X className="h-5 w-5" />
+                        </button>
+
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="p-2.5 rounded-xl bg-rose-950/80 border border-rose-800/80 text-rose-400">
+                                <Building2 className="h-6 w-6" />
+                            </div>
+                            <div>
+                                <h2 className="text-lg font-bold text-white">Register Host Venue</h2>
+
+                            </div>
+                        </div>
+
+                        {venueBanner && (
+                            <div
+                                className={`mt-4 p-3 rounded-xl border flex items-center gap-2.5 text-xs ${venueBanner.type === 'success'
+                                        ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300'
+                                        : 'bg-red-950/60 border-red-800 text-red-300'
+                                    }`}
+                            >
+                                {venueBanner.type === 'success' ? (
+                                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
+                                ) : (
+                                    <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />
+                                )}
+                                <span>{venueBanner.message}</span>
+                            </div>
+                        )}
+
+                        <form onSubmit={handleAddVenue} className="mt-4 space-y-3.5 text-xs">
+                            <div>
+                                <label className="block text-slate-300 mb-1 font-semibold">
+                                    Venue Name <span className="text-rose-500">*</span>
+                                </label>
+                                <input
+                                    required
+                                    type="text"
+                                    placeholder="e.g. St. Thomas Community Hall"
+                                    value={venueName}
+                                    onChange={(e) => setVenueName(e.target.value)}
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 focus:outline-none focus:border-rose-500 transition"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-slate-300 mb-1 font-semibold">
+                                        City <span className="text-rose-500">*</span>
+                                    </label>
+                                    <input
+                                        required
+                                        type="text"
+                                        placeholder="e.g. Colombo"
+                                        value={venueCity}
+                                        onChange={(e) => setVenueCity(e.target.value)}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 focus:outline-none focus:border-rose-500 transition"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-slate-300 mb-1 font-semibold">
+                                        Capacity (Persons)
+                                    </label>
+                                    <input
+                                        required
+                                        type="number"
+                                        min="1"
+                                        value={venueCapacity}
+                                        onChange={(e) => setVenueCapacity(e.target.value)}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 font-mono focus:outline-none focus:border-rose-500 transition"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-slate-300 mb-1 font-semibold">
+                                    Street Address <span className="text-rose-500">*</span>
+                                </label>
+                                <input
+                                    required
+                                    type="text"
+                                    placeholder="e.g. 150 Galle Road, Kollupitiya"
+                                    value={venueAddress}
+                                    onChange={(e) => setVenueAddress(e.target.value)}
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 focus:outline-none focus:border-rose-500 transition"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-slate-300 mb-1 font-semibold">
+                                    Contact Phone <span className="text-rose-500">*</span>
+                                </label>
+                                <input
+                                    required
+                                    type="text"
+                                    placeholder="e.g. +94 11 234 5678"
+                                    value={venueContact}
+                                    onChange={(e) => setVenueContact(e.target.value)}
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 focus:outline-none focus:border-rose-500 transition"
+                                />
+                            </div>
+
+                            <div className="flex justify-end gap-2.5 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowVenueModal(false)}
+                                    className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={savingVenue || !venueName || !venueCity || !venueAddress || !venueContact}
+                                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 disabled:opacity-50 text-white font-semibold transition"
+                                >
+                                    {savingVenue ? 'Saving in Oracle...' : 'Save Host Venue'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Add Medical Organizer (Staff) Modal */}
+            {showStaffModal && (
+                <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-[60] overflow-y-auto">
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 max-w-md w-full shadow-2xl relative my-8 animate-in fade-in zoom-in duration-200">
+                        <button
+                            onClick={() => setShowStaffModal(false)}
+                            className="absolute top-5 right-5 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
+                        >
+                            <X className="h-5 w-5" />
+                        </button>
+
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="p-2.5 rounded-xl bg-rose-950/80 border border-rose-800/80 text-rose-400">
+                                <User className="h-6 w-6" />
+                            </div>
+                            <div>
+                                <h2 className="text-lg font-bold text-white">Register Medical Organizer</h2>
+                            </div>
+                        </div>
+
+                        {staffBanner && (
+                            <div
+                                className={`mt-4 p-3 rounded-xl border flex items-center gap-2.5 text-xs ${staffBanner.type === 'success'
+                                        ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300'
+                                        : 'bg-red-950/60 border-red-800 text-red-300'
+                                    }`}
+                            >
+                                {staffBanner.type === 'success' ? (
+                                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
+                                ) : (
+                                    <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />
+                                )}
+                                <span>{staffBanner.message}</span>
+                            </div>
+                        )}
+
+                        <form onSubmit={handleAddStaff} className="mt-4 space-y-3.5 text-xs">
+                            <div>
+                                <label className="block text-slate-300 mb-1 font-semibold">
+                                    Full Name <span className="text-rose-500">*</span>
+                                </label>
+                                <input
+                                    required
+                                    type="text"
+                                    placeholder="e.g. Dr. Shanaka Wickramasinghe"
+                                    value={staffName}
+                                    onChange={(e) => setStaffName(e.target.value)}
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 focus:outline-none focus:border-rose-500 transition"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-slate-300 mb-1 font-semibold">
+                                    Medical Role <span className="text-rose-500">*</span>
+                                </label>
+                                <select
+                                    value={staffRole}
+                                    onChange={(e) => setStaffRole(e.target.value)}
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 focus:outline-none focus:border-rose-500 transition"
+                                >
+                                    <option value="Medical Officer">Medical Officer</option>
+                                    <option value="Head Phlebotomist">Head Phlebotomist</option>
+                                    <option value="Medical Supervisor">Medical Supervisor</option>
+                                    <option value="Camp Coordinator">Camp Coordinator</option>
+                                    <option value="Consultant Hematologist">Consultant Hematologist</option>
+                                    <option value="Clinical Lead">Clinical Lead</option>
+                                </select>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-slate-300 mb-1 font-semibold">
+                                        Contact Phone <span className="text-rose-500">*</span>
+                                    </label>
+                                    <input
+                                        required
+                                        type="text"
+                                        placeholder="e.g. +94 77 123 4567"
+                                        value={staffContact}
+                                        onChange={(e) => setStaffContact(e.target.value)}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 focus:outline-none focus:border-rose-500 transition"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-slate-300 mb-1 font-semibold">
+                                        Email Address <span className="text-rose-500">*</span>
+                                    </label>
+                                    <input
+                                        required
+                                        type="email"
+                                        placeholder="e.g. shanaka@lifeline.lk"
+                                        value={staffEmail}
+                                        onChange={(e) => setStaffEmail(e.target.value)}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 focus:outline-none focus:border-rose-500 transition"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end gap-2.5 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowStaffModal(false)}
+                                    className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={savingStaff || !staffName || !staffContact || !staffEmail}
+                                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 disabled:opacity-50 text-white font-semibold transition"
+                                >
+                                    {savingStaff ? 'Saving in Oracle...' : 'Save Medical Organizer'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             )}
         </div>
