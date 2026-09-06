@@ -18,8 +18,17 @@ import {
     X,
     Layers,
     ChevronRight,
-    Sparkles
+    Sparkles,
+    Lock,
+    LogIn,
+    LogOut,
+    UserCheck,
+    Stethoscope,
+    Building2,
+    KeyRound
 } from 'lucide-react';
+import { useAuth } from '@/lib/auth/AuthContext';
+import { UserRole } from '@/lib/auth/session';
 
 interface NavItem {
     name: string;
@@ -27,6 +36,7 @@ interface NavItem {
     icon: React.ComponentType<{ className?: string }>;
     badge?: string;
     badgeColor?: string;
+    allowedRoles?: UserRole[];
 }
 
 interface NavSection {
@@ -36,6 +46,7 @@ interface NavSection {
 
 export default function Sidebar() {
     const pathname = usePathname();
+    const { user, logout, hasPermission } = useAuth();
     const [mobileOpen, setMobileOpen] = useState(false);
     const [healthStatus, setHealthStatus] = useState<{ oracle: string; mongo: string } | null>(null);
 
@@ -74,6 +85,7 @@ export default function Sidebar() {
                     icon: Calendar,
                     badge: 'Hybrid',
                     badgeColor: 'bg-amber-950/80 text-amber-300 border-amber-800/80',
+                    allowedRoles: ['ADMIN', 'CLINICAL_STAFF', 'SCHEMA_OWNER'],
                 },
                 {
                     name: 'Donors & Intake',
@@ -81,6 +93,7 @@ export default function Sidebar() {
                     icon: Heart,
                     badge: 'Triggers',
                     badgeColor: 'bg-emerald-950/80 text-emerald-300 border-emerald-800/80',
+                    allowedRoles: ['ADMIN', 'CLINICAL_STAFF', 'SCHEMA_OWNER'],
                 },
                 {
                     name: 'Stock & Distribution',
@@ -88,6 +101,7 @@ export default function Sidebar() {
                     icon: Truck,
                     badge: '3NF',
                     badgeColor: 'bg-blue-950/80 text-blue-300 border-blue-800/80',
+                    allowedRoles: ['ADMIN', 'HOSPITAL_COORDINATOR', 'SCHEMA_OWNER'],
                 },
             ],
         },
@@ -100,6 +114,7 @@ export default function Sidebar() {
                     icon: AlertTriangle,
                     badge: 'Live Q&A',
                     badgeColor: 'bg-amber-950/80 text-amber-300 border-amber-800/80',
+                    allowedRoles: ['ADMIN', 'HOSPITAL_COORDINATOR', 'CLINICAL_STAFF', 'SCHEMA_OWNER'],
                 },
                 {
                     name: 'Media & Guidelines',
@@ -111,6 +126,39 @@ export default function Sidebar() {
             ],
         },
     ];
+
+    const getRoleBadgeInfo = (role?: UserRole) => {
+        switch (role) {
+            case 'ADMIN':
+            case 'SCHEMA_OWNER':
+                return {
+                    label: 'ADMIN (FULL)',
+                    bg: 'bg-rose-950/80 text-rose-300 border-rose-800/80',
+                    icon: Shield,
+                };
+            case 'CLINICAL_STAFF':
+                return {
+                    label: 'CLINICAL STAFF',
+                    bg: 'bg-emerald-950/80 text-emerald-300 border-emerald-800/80',
+                    icon: Stethoscope,
+                };
+            case 'HOSPITAL_COORDINATOR':
+                return {
+                    label: 'HOSPITAL COORD',
+                    bg: 'bg-blue-950/80 text-blue-300 border-blue-800/80',
+                    icon: Building2,
+                };
+            default:
+                return {
+                    label: 'GUEST / POOL',
+                    bg: 'bg-slate-800 text-slate-400 border-slate-700',
+                    icon: Database,
+                };
+        }
+    };
+
+    const roleBadge = getRoleBadgeInfo(user?.role);
+    const RoleIcon = roleBadge.icon;
 
     const sidebarContent = (
         <div className="flex flex-col h-full bg-slate-950 border-r border-slate-800/80 text-slate-200 select-none">
@@ -143,6 +191,28 @@ export default function Sidebar() {
                             {section.items.map((item) => {
                                 const Icon = item.icon;
                                 const isActive = pathname === item.href;
+                                const isAllowed = !user || hasPermission(item.allowedRoles);
+
+                                if (!isAllowed) {
+                                    // Render locked item to visually demonstrate RBAC restrictions to examiner
+                                    return (
+                                        <div
+                                            key={item.href}
+                                            title="Restricted by Oracle Role Privilege (RBAC)"
+                                            className="flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-600 bg-slate-950/40 border border-slate-900 cursor-not-allowed opacity-60"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <Icon className="h-4 w-4 text-slate-600" />
+                                                <span className="line-through decoration-slate-700">{item.name}</span>
+                                            </div>
+                                            <span className="flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded border bg-rose-950/40 text-rose-400 border-rose-900/60 uppercase">
+                                                <Lock className="h-2.5 w-2.5" />
+                                                RBAC
+                                            </span>
+                                        </div>
+                                    );
+                                }
+
                                 return (
                                     <Link
                                         key={item.href}
@@ -181,7 +251,64 @@ export default function Sidebar() {
                 ))}
             </div>
 
-            {/* Bottom Engine Health Widget */}
+            {/* User Account / RBAC Authentication Card */}
+            <div className="p-3 border-t border-slate-800/80 bg-slate-950/80">
+                {user ? (
+                    <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2.5">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 min-w-0">
+                                <div className="h-8 w-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 text-rose-400">
+                                    <RoleIcon className="h-4 w-4" />
+                                </div>
+                                <div className="min-w-0">
+                                    <div className="text-xs font-bold text-white truncate">
+                                        {user.displayName}
+                                    </div>
+                                    <div className="text-[10px] text-slate-400 font-mono truncate">
+                                        {user.username}
+                                    </div>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => logout()}
+                                title="Sign Out of Oracle PDB"
+                                className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 rounded-lg transition"
+                            >
+                                <LogOut className="h-4 w-4" />
+                            </button>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-2 border-t border-slate-800/80 text-[10px]">
+                            <span className="text-slate-400">Role:</span>
+                            <span className={`px-2 py-0.5 rounded-md border font-mono font-bold text-[9px] ${roleBadge.bg}`}>
+                                {roleBadge.label}
+                            </span>
+                        </div>
+                    </div>
+                ) : (
+                    <Link
+                        href="/login"
+                        className="flex items-center justify-between p-2.5 rounded-xl bg-gradient-to-r from-rose-950/60 to-slate-900 border border-rose-900/50 hover:border-rose-700 text-slate-200 transition group"
+                    >
+                        <div className="flex items-center gap-2.5">
+                            <div className="p-1.5 rounded-lg bg-rose-600 text-white shadow-sm">
+                                <KeyRound className="h-4 w-4" />
+                            </div>
+                            <div>
+                                <div className="text-xs font-bold text-white group-hover:text-rose-400 transition">
+                                    Sign In with PDB
+                                </div>
+                                <div className="text-[10px] text-slate-400">
+                                    Oracle RBAC Accounts
+                                </div>
+                            </div>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-slate-500 group-hover:text-rose-400 group-hover:translate-x-0.5 transition" />
+                    </Link>
+                )}
+            </div>
+
+            {/* Bottom Database Connectivity Status */}
             <div className="p-3 border-t border-slate-800/80 bg-slate-950/60">
                 <div className="bg-slate-900/90 border border-slate-800/90 rounded-xl p-3 space-y-2">
                     <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
@@ -212,8 +339,8 @@ export default function Sidebar() {
                     </div>
 
                     <div className="pt-2 mt-1 border-t border-slate-800 flex items-center justify-between text-[10px] text-slate-400">
-                        <span>User: LIFELINE_CONNECT</span>
-                        <span className="font-mono text-cyan-400">3NF Schema</span>
+                        <span>Auth: {user ? user.username : 'Default Pool'}</span>
+                        <span className="font-mono text-cyan-400">XEPDB1</span>
                     </div>
                 </div>
             </div>
@@ -231,13 +358,27 @@ export default function Sidebar() {
                     <span>LifeLine Connect</span>
                 </Link>
 
-                <button
-                    onClick={() => setMobileOpen(!mobileOpen)}
-                    className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-900 transition"
-                    aria-label="Toggle navigation menu"
-                >
-                    {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-                </button>
+                <div className="flex items-center gap-2">
+                    {user ? (
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-mono border ${roleBadge.bg}`}>
+                            {user.username}
+                        </span>
+                    ) : (
+                        <Link
+                            href="/login"
+                            className="px-2 py-1 text-xs bg-rose-600 text-white rounded font-medium"
+                        >
+                            Login
+                        </Link>
+                    )}
+                    <button
+                        onClick={() => setMobileOpen(!mobileOpen)}
+                        className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-900 transition"
+                        aria-label="Toggle navigation menu"
+                    >
+                        {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                    </button>
+                </div>
             </header>
 
             {/* Mobile Drawer Overlay */}
