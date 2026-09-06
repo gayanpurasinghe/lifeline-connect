@@ -42,6 +42,74 @@ The solution integrates a **dual-database hybrid architecture**:
 
 ---
 
+## 📸 System Interface & UI Walkthrough
+
+The portal provides an intuitive, high-performance dark-themed management interface with a centralized left navigation bar, live database connectivity indicators, and sub-system modules:
+
+### 1. Dual-Database Portal Dashboard & Subsystems
+> **Overview & Navigation Shell**: Central landing interface presenting live status indicators for Oracle Database 21c and MongoDB NoSQL, alongside quick-access cards to core operational subsystems.
+
+![Dual-Database Portal Dashboard](resourses/ScreenShots/01_portal_home_overview.png)
+
+---
+
+### 2. Executive Dashboard & PL/SQL Business Reports Explorer
+> **Coursework Rubric (15%)**: Interactive interface executing `LIFELINE_REPORTS_PKG` procedures via dynamic `SYS_REFCURSOR` queries. Allows examiners to trigger all 5 business reports with 1-click test parameters.
+
+![Executive Dashboard & PL/SQL Reports Explorer](resourses/ScreenShots/02_executive_dashboard_reports.png)
+
+---
+
+### 3. Cross-Database Hybrid Analytics & Correlation Engine
+> **Coursework Innovation (10%)**: Unifies structured Oracle transactional tables with dynamic MongoDB collections to compute real-time correlations—such as Camp Target Quotas vs. Donor Rating Scores, and Active Emergency Appeals vs. Physical Stock Availability.
+
+![Hybrid Cross-Database Analytics Panel](resourses/ScreenShots/03_hybrid_cross_db_analytics.png)
+
+---
+
+### 4. Blood Donation Camps & Real-time NoSQL Leaderboard
+> **MongoDB Aggregation Pipeline**: Camp scheduling and medical roster management paired with a real-time Top-Rated Camps leaderboard computed via a MongoDB aggregation pipeline (`$group` with `$avg` rating).
+
+![Camps & Rosters Management with Leaderboard](resourses/ScreenShots/04_camps_rosters_leaderboard.png)
+
+---
+
+### 5. Donor Registration & Automated Clinical Intake Screening
+> **PL/SQL Health Assessment Trigger (`TRG_EVALUATE_DONOR_HEALTH`)**: Medical officers record donor vital metrics (Weight, Hemoglobin, Blood Pressure). The database trigger autonomously computes eligibility (`ELIGIBLE` vs `DEFERRED`) and logs clinical deferral reasons.
+
+![Donor Registration & Clinical Intake](resourses/ScreenShots/05_donor_clinical_intake_triggers.png)
+
+---
+
+### 6. Hospital Requisitions & 3NF Blood Unit Distribution Engine
+> **Relational Distribution Trigger (`TRG_AFTER_DISTRIBUTION`)**: Manages 3NF hospital requests, line-item fulfillment, and physical unit dispatching while automatically updating inventory status to `DISTRIBUTED`.
+
+![Hospital Stock & Blood Distribution](resourses/ScreenShots/06_hospital_distribution_inventory.png)
+
+---
+
+### 7. Real-Time Emergency Appeals & Community Response Network
+> **MongoDB Nested Discussion Threads**: Urgent blood shortage broadcasts issued by regional hospitals, featuring live community response threads and donation pledges.
+
+![Emergency Blood Appeals with Discussion Threads](resourses/ScreenShots/07_emergency_appeals_discussion.png)
+
+---
+
+### 8. Hospital Emergency Broadcast Broadcast Modal
+> **Emergency Appeal Dispatch**: Rapid broadcast creation modal enabling hospital coordinators to alert regional voluntary donors for urgent whole blood, platelet, and red cell requirements.
+
+![Post Emergency Appeal Modal](resourses/ScreenShots/08_emergency_appeal_modal.png)
+
+---
+
+### 9. Campaign Media & Medical Guidelines Document Store
+> **Polymorphic NoSQL Document Store**: Flexible catalog for donor medical guidelines, nutrition pamphlets, and promotional awareness kits with varied schema metadata (color palettes, reading times, dietary rules).
+
+![Campaign Media & Medical Guidelines](resourses/ScreenShots/09_campaign_media_guidelines.png)
+
+
+---
+
 ## 🗄️ Relational Schema & Normalization (Oracle 3NF)
 
 The relational schema consists of **14 normalized entities** in Third Normal Form (3NF), complete with Primary Keys, Foreign Keys, unique constraints, and check conditions:
@@ -147,15 +215,3 @@ npm run dev
 Open **[http://localhost:3000](http://localhost:3000)** in your browser.
 
 ---
-
-## 📊 Evaluation & Viva Rubric Compliance
-
-| Rubric Criteria | Implementation Proof | Weight |
-|---|---|:---:|
-| **Front-end Development + ER Diagram** | Full responsive portal + [resourses/ER_DIAGRAM.md](file:///c:/Users/gayan/OneDrive/Documents/EDU/NIBM/HDSE/sem-2/dm-2/Course_Work/lifeline-connect/resourses/ER_DIAGRAM.md) (14 tables, normalized 3NF) | 20% |
-| **Database Implementation (Oracle)** | 14 tables, check constraints, foreign keys, triggers, roles, and Data Pump backup scripts | 15% |
-| **MongoDB Incorporation** | Flexible media/guidelines, reviews, appeals, and aggregation queries (`$avg`, `$group`) | 15% |
-| **Reports & Business Logic (PL/SQL)** | `LIFELINE_REPORTS_PKG` with 5 dynamic cursor reports and advanced exception handling | 15% |
-| **Completeness of Project** | All system operations: venues, camps, donors, inventory, hospital distribution, and rosters | 5% |
-| **Integration & Innovation** | Cross-Database Hybrid Analytics (`/dashboard` & `/api/analytics/hybrid`) | 10% |
-| **Presentation & Viva** | Comprehensive SQL scripts, backup/restore batch utilities, and clear architecture | 20% |
