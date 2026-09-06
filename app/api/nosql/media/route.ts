@@ -67,3 +67,98 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
+
+export async function POST(request: NextRequest) {
+    try {
+        await connectMongo();
+        const body = await request.json();
+        const { title, category, fileFormat, fileUrl, tags, flexibleMetadata } = body;
+
+        if (!title?.trim()) {
+            return NextResponse.json(
+                { success: false, error: 'Document Title is required.' },
+                { status: 400 }
+            );
+        }
+
+        const validCategories = ['GUIDELINE', 'AWARENESS', 'PROMOTIONAL_MEDIA'];
+        if (!category || !validCategories.includes(category)) {
+            return NextResponse.json(
+                { success: false, error: `Invalid category. Must be one of: ${validCategories.join(', ')}` },
+                { status: 400 }
+            );
+        }
+
+        if (!fileFormat?.trim()) {
+            return NextResponse.json(
+                { success: false, error: 'File format is required (e.g. PDF, PNG, MP4, ZIP).' },
+                { status: 400 }
+            );
+        }
+
+        if (!fileUrl?.trim()) {
+            return NextResponse.json(
+                { success: false, error: 'Asset download or preview URL is required.' },
+                { status: 400 }
+            );
+        }
+
+        let parsedTags: string[] = [];
+        if (Array.isArray(tags)) {
+            parsedTags = tags.map((t) => String(t).trim()).filter(Boolean);
+        } else if (typeof tags === 'string') {
+            parsedTags = tags.split(',').map((t) => t.trim()).filter(Boolean);
+        }
+
+        let metadataObj = {};
+        if (flexibleMetadata && typeof flexibleMetadata === 'object') {
+            metadataObj = flexibleMetadata;
+        }
+
+        const newMedia = await CampaignMedia.create({
+            title: title.trim(),
+            category,
+            fileFormat: fileFormat.trim().toUpperCase(),
+            fileUrl: fileUrl.trim(),
+            tags: parsedTags,
+            flexibleMetadata: metadataObj,
+        });
+
+        return NextResponse.json(
+            {
+                success: true,
+                data: newMedia,
+                message: `Media asset '${newMedia.title}' registered successfully in MongoDB document store.`,
+            },
+            { status: 201 }
+        );
+    } catch (error: any) {
+        console.error('CampaignMedia POST Error:', error);
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+}
+
+export async function DELETE(request: NextRequest) {
+    try {
+        await connectMongo();
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get('id');
+
+        if (!id) {
+            return NextResponse.json({ success: false, error: 'Document ID is required.' }, { status: 400 });
+        }
+
+        const deleted = await CampaignMedia.findByIdAndDelete(id);
+        if (!deleted) {
+            return NextResponse.json({ success: false, error: 'Document not found.' }, { status: 404 });
+        }
+
+        return NextResponse.json({
+            success: true,
+            message: `Document '${deleted.title}' deleted successfully from MongoDB.`,
+        });
+    } catch (error: any) {
+        console.error('CampaignMedia DELETE Error:', error);
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+}

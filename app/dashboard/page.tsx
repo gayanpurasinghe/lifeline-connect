@@ -267,11 +267,10 @@ export default function DashboardPage() {
                                         setParamValue(preset.value);
                                         fetchReport(preset.value);
                                     }}
-                                    className={`px-3 py-1.5 rounded-lg border font-medium transition ${
-                                        isSelected
+                                    className={`px-3 py-1.5 rounded-lg border font-medium transition ${isSelected
                                             ? 'bg-rose-600 text-white border-rose-500 shadow-sm'
                                             : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'
-                                    }`}
+                                        }`}
                                 >
                                     {preset.label}
                                 </button>
@@ -330,14 +329,8 @@ export default function DashboardPage() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-800">
                     <div>
                         <div className="flex items-center gap-2">
-                            <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-purple-950 text-purple-300 border border-purple-800 uppercase flex items-center gap-1">
-                                <Sparkles className="h-3 w-3" /> Rubric: Integration & Innovation (10%)
-                            </span>
                             <h2 className="text-lg font-semibold text-white">Hybrid Cross-Database Analytics</h2>
                         </div>
-                        <p className="text-slate-400 text-sm mt-1">
-                            Correlating Oracle 3NF transactional metrics with MongoDB NoSQL community sentiment and real-time stock deficits
-                        </p>
                     </div>
 
                     <button
@@ -401,15 +394,14 @@ export default function DashboardPage() {
                                             </td>
                                             <td className="py-3 px-3">
                                                 <span
-                                                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                                        c.satisfactionTier === 'OUTSTANDING'
+                                                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${c.satisfactionTier === 'OUTSTANDING'
                                                             ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
                                                             : c.satisfactionTier === 'SATISFACTORY'
-                                                            ? 'bg-blue-950 text-blue-400 border border-blue-800'
-                                                            : c.satisfactionTier === 'NEEDS_IMPROVEMENT'
-                                                            ? 'bg-rose-950 text-rose-400 border border-rose-800'
-                                                            : 'bg-slate-800 text-slate-400'
-                                                    }`}
+                                                                ? 'bg-blue-950 text-blue-400 border border-blue-800'
+                                                                : c.satisfactionTier === 'NEEDS_IMPROVEMENT'
+                                                                    ? 'bg-rose-950 text-rose-400 border border-rose-800'
+                                                                    : 'bg-slate-800 text-slate-400'
+                                                        }`}
                                                 >
                                                     {c.satisfactionTier.replace('_', ' ')}
                                                 </span>
@@ -466,13 +458,12 @@ export default function DashboardPage() {
                                             </td>
                                             <td className="py-3 px-3">
                                                 <span
-                                                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                                                        app.fulfillmentStatus === 'STOCK_AVAILABLE'
+                                                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${app.fulfillmentStatus === 'STOCK_AVAILABLE'
                                                             ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
                                                             : app.fulfillmentStatus === 'PARTIAL_STOCK'
-                                                            ? 'bg-amber-950 text-amber-300 border border-amber-800'
-                                                            : 'bg-rose-950 text-rose-300 border border-rose-800'
-                                                    }`}
+                                                                ? 'bg-amber-950 text-amber-300 border border-amber-800'
+                                                                : 'bg-rose-950 text-rose-300 border border-rose-800'
+                                                        }`}
                                                 >
                                                     {app.fulfillmentStatus.replace(/_/g, ' ')}
                                                 </span>
