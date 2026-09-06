@@ -12,7 +12,8 @@ import {
   ShieldCheck,
   ArrowRight,
   Server,
-  Layers
+  Layers,
+  BookOpen
 } from 'lucide-react';
 
 export default function HomePage() {
@@ -65,6 +66,14 @@ export default function HomePage() {
       icon: AlertTriangle,
       badge: 'MongoDB NoSQL',
       badgeColor: 'bg-amber-950 text-amber-400 border-amber-800',
+    },
+    {
+      title: 'Campaign Media & Guidelines',
+      description: 'Pre-donation clinical guides, awareness infographics, and promotional media in polymorphic formats.',
+      href: '/media',
+      icon: BookOpen,
+      badge: 'Flexible Documents',
+      badgeColor: 'bg-purple-950 text-purple-400 border-purple-800',
     },
   ];
 

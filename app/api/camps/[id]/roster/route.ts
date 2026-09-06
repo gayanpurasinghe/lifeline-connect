@@ -15,11 +15,13 @@ export async function GET(
         const staffSql = `
       SELECT 
         cs.CampID,
-        cs.AssignedRole,
+        cs.Role AS AssignedRole,
+        TO_CHAR(cs.AssignedDate, 'YYYY-MM-DD') AS AssignedDate,
         s.StaffID,
         s.Name AS StaffName,
         s.Role AS PrimaryRole,
-        s.Contact
+        s.Contact,
+        s.Email
       FROM CAMP_STAFF cs
       INNER JOIN STAFF s ON cs.StaffID = s.StaffID
       WHERE cs.CampID = :campId
@@ -30,8 +32,8 @@ export async function GET(
         const volunteerSql = `
       SELECT 
         cv.CampID,
-        cv.AssignedTask,
-        cv.HoursContributed,
+        cv.Role AS AssignedRole,
+        TO_CHAR(cv.AssignedDate, 'YYYY-MM-DD') AS AssignedDate,
         v.VolunteerID,
         v.Name AS VolunteerName,
         v.Contact,
