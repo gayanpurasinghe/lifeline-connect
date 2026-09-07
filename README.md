@@ -184,9 +184,20 @@ Located in `resourses/user.sql`:
   * The portal navigation dynamically adapts: modules outside the user's role privilege are visually locked with an **RBAC Lock** indicator, demonstrating role enforcement in viva presentations.
 
 
-### Disaster Recovery & Backup Plan
-* **Automated Backup**: [resourses/backup_strategy.bat](file:///c:/Users/gayan/OneDrive/Documents/EDU/NIBM/HDSE/sem-2/dm-2/Course_Work/lifeline-connect/resourses/backup_strategy.bat) exports the Oracle schema via Data Pump (`expdp`) and dumps MongoDB collections via `mongodump`.
-* **Automated Restore**: [resourses/restore_strategy.bat](file:///c:/Users/gayan/OneDrive/Documents/EDU/NIBM/HDSE/sem-2/dm-2/Course_Work/lifeline-connect/resourses/restore_strategy.bat) recovers Oracle PDB via `impdp table_exists_action=REPLACE` and restores MongoDB via `mongorestore --drop`.
+### 💾 Disaster Recovery & Dual-Database Backup Strategy
+
+LifeLine Connect implements a comprehensive, redundant backup architecture offering both zero-dependency web UI triggers and enterprise CLI scripts:
+
+1. **Interactive Web UI Backup Button & Modal (In-App)**:
+   - **One-Click Backup Access**: Located in both the **Left Navigation Sidebar** (Database Connectivity card) and the **Executive Dashboard** (`/dashboard`).
+   - **Full Dual-Database Snapshot (`POST /api/backup`)**: Simultaneously queries and snapshots all **14 Oracle relational tables** (`VENUE`, `STAFF`, `VOLUNTEER`, `CAMP`, `CAMP_STAFF`, `CAMP_VOLUNTEER`, `DONOR`, `DONOR_HEALTH`, `DONATION`, `BLOOD_UNIT`, `HOSPITAL`, `BLOOD_REQUEST`, `REQUEST_ITEM`, `DISTRIBUTION`) and **3 MongoDB NoSQL collections** (`CampaignMedia`, `Review`, `Appeal`).
+   - **Detailed Visual Verification**: Real-time modal displays individual record counts, storage disk location, and timestamped directory paths.
+   - **JSON Archive Download**: Allows examiners to click **"Download JSON Archive"** to inspect the live data payload directly in browser without requiring external database tools.
+
+2. **Enterprise Command-Line Backup Scripts (Rubric Compliance)**:
+   - **Automated Backup**: [resourses/backup_strategy.bat](file:///c:/Users/gayan/OneDrive/Documents/EDU/NIBM/HDSE/sem-2/dm-2/Course_Work/lifeline-connect/resourses/backup_strategy.bat) exports the Oracle schema via Data Pump (`expdp`) into `DATA_PUMP_DIR` and dumps MongoDB collections via `mongodump` into timestamped backup folders (`resourses/backups/backup_YYYYMMDD_HHMMSS/`).
+   - **Automated Disaster Recovery**: [resourses/restore_strategy.bat](file:///c:/Users/gayan/OneDrive/Documents/EDU/NIBM/HDSE/sem-2/dm-2/Course_Work/lifeline-connect/resourses/restore_strategy.bat) executes an Oracle Data Pump restore via `impdp table_exists_action=REPLACE` and full MongoDB collection restoration via `mongorestore --drop`.
+
 
 ---
 

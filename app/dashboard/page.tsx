@@ -15,8 +15,10 @@ import {
     Sparkles,
     CheckCircle2,
     XCircle,
-    PackageCheck
+    PackageCheck,
+    HardDrive
 } from 'lucide-react';
+import BackupModal from '@/components/BackupModal';
 
 interface ReportOption {
     id: string;
@@ -82,6 +84,7 @@ export default function DashboardPage() {
     // Hybrid Analytics State
     const [hybridData, setHybridData] = useState<any>(null);
     const [hybridLoading, setHybridLoading] = useState<boolean>(false);
+    const [showBackupModal, setShowBackupModal] = useState<boolean>(false);
 
     const activeConfig = REPORTS.find((r) => r.id === selectedReport);
 
@@ -155,7 +158,14 @@ export default function DashboardPage() {
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-950 text-emerald-400 border border-emerald-800">
+                    <button
+                        onClick={() => setShowBackupModal(true)}
+                        className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-rose-950/80 to-slate-900 hover:from-rose-900/80 hover:to-slate-800 border border-rose-800/80 hover:border-rose-700 text-rose-300 text-xs font-semibold flex items-center gap-2 transition shadow-lg shadow-rose-950/40"
+                    >
+                        <HardDrive className="h-4 w-4 text-rose-400" />
+                        <span>Backup Databases</span>
+                    </button>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-950 text-emerald-400 border border-emerald-800">
                         <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                         Oracle PDB & MongoDB Online
                     </span>
@@ -476,6 +486,9 @@ export default function DashboardPage() {
                     )}
                 </div>
             </div>
+
+            {/* In-App Database Snapshot & Backup Modal */}
+            <BackupModal isOpen={showBackupModal} onClose={() => setShowBackupModal(false)} />
         </div>
     );
 }
