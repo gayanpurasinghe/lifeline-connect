@@ -16,9 +16,11 @@ import {
     CheckCircle2,
     XCircle,
     PackageCheck,
-    HardDrive
+    HardDrive,
+    FileDown
 } from 'lucide-react';
 import BackupModal from '@/components/BackupModal';
+import { generatePLSQLReportPDF, generateHybridAnalyticsPDF } from '@/lib/reports/pdfGenerator';
 
 interface ReportOption {
     id: string;
@@ -80,6 +82,7 @@ export default function DashboardPage() {
     const [reportData, setReportData] = useState<any[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+    const [downloadingPdf, setDownloadingPdf] = useState<boolean>(false);
 
     // Hybrid Analytics State
     const [hybridData, setHybridData] = useState<any>(null);
@@ -87,6 +90,79 @@ export default function DashboardPage() {
     const [showBackupModal, setShowBackupModal] = useState<boolean>(false);
 
     const activeConfig = REPORTS.find((r) => r.id === selectedReport);
+
+    const handleDownloadReportPDF = () => {
+        if (!reportData || reportData.length === 0) return;
+        setDownloadingPdf(true);
+        try {
+            generatePLSQLReportPDF({
+                reportId: selectedReport,
+                reportName: activeConfig?.name || selectedReport,
+                description: activeConfig?.description || '',
+                paramValue: paramValue || undefined,
+                paramLabel: activeConfig?.paramLabel,
+                data: reportData,
+            });
+        } catch (err) {
+            console.error('Failed to generate PDF report:', err);
+        } finally {
+            setDownloadingPdf(false);
+        }
+    };
+
+    const handleDownloadCampHybridPDF = () => {
+        if (!hybridData?.campHybridInsights?.length) return;
+        generateHybridAnalyticsPDF({
+            title: 'Camp Quota Execution vs. Donor Experience Rating',
+            data: hybridData.campHybridInsights,
+            headers: [
+                'Camp ID & Name',
+                'Location',
+                'Collected / Target',
+                'Achievement %',
+                'Avg Rating',
+                'Reviews',
+                'Avg Wait Time',
+                'Sentiment Tier',
+            ],
+            columnKeys: [
+                'campName',
+                'city',
+                'unitsCollected',
+                'achievementPct',
+                'averageRating',
+                'totalReviews',
+                'averageWaitTime',
+                'satisfactionTier',
+            ],
+            filenamePrefix: 'LifeLine_Hybrid_Camp_Quota_Satisfaction',
+        });
+    };
+
+    const handleDownloadEmergencyStockPDF = () => {
+        if (!hybridData?.emergencyStockCrossMatch?.length) return;
+        generateHybridAnalyticsPDF({
+            title: 'Emergency Blood Appeals vs. Physical Unit Stock Shortage',
+            data: hybridData.emergencyStockCrossMatch,
+            headers: [
+                'Hospital & Location',
+                'Blood Group',
+                'Units Needed',
+                'Oracle Stock',
+                'Deficit',
+                'Fulfillment Feasibility',
+            ],
+            columnKeys: [
+                'hospitalName',
+                'bloodGroup',
+                'unitsNeeded',
+                'oracleCurrentStock',
+                'inventoryShortage',
+                'fulfillmentStatus',
+            ],
+            filenamePrefix: 'LifeLine_Hybrid_Emergency_Stock_Deficit',
+        });
+    };
 
     useEffect(() => {
         if (activeConfig?.defaultParam) {
@@ -257,6 +333,16 @@ export default function DashboardPage() {
                             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                             Run Report
                         </button>
+
+                        <button
+                            onClick={handleDownloadReportPDF}
+                            disabled={loading || reportData.length === 0 || downloadingPdf}
+                            title={reportData.length === 0 ? 'Run report to fetch data before downloading PDF' : 'Download current report as PDF'}
+                            className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-rose-900/70 hover:border-rose-600/80 disabled:opacity-40 disabled:hover:bg-slate-800 disabled:hover:border-rose-900/70 text-rose-300 text-sm font-medium px-3.5 py-2 rounded-lg transition shadow-sm"
+                        >
+                            <FileDown className={`h-4 w-4 text-rose-400 ${downloadingPdf ? 'animate-bounce' : ''}`} />
+                            <span>{downloadingPdf ? 'Generating PDF...' : 'Download PDF'}</span>
+                        </button>
                     </div>
                 </div>
 
@@ -355,10 +441,21 @@ export default function DashboardPage() {
 
                 {/* Sub-Panel 1: Camp Target vs. Donor Satisfaction */}
                 <div className="mt-6 mb-8">
-                    <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider mb-3 flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-rose-400" />
-                        1. Camp Quota Execution vs. Donor Experience Rating
-                    </h3>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                        <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-rose-400" />
+                            1. Camp Quota Execution vs. Donor Experience Rating
+                        </h3>
+                        {hybridData?.campHybridInsights?.length > 0 && (
+                            <button
+                                onClick={handleDownloadCampHybridPDF}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 border border-purple-800/80 text-purple-300 hover:text-purple-200 text-xs font-medium transition"
+                            >
+                                <FileDown className="h-3.5 w-3.5 text-purple-400" />
+                                <span>Export PDF</span>
+                            </button>
+                        )}
+                    </div>
 
                     {hybridLoading ? (
                         <div className="py-8 text-center text-slate-400 text-xs">Reconciling Oracle & Mongo records...</div>
@@ -426,10 +523,21 @@ export default function DashboardPage() {
 
                 {/* Sub-Panel 2: Emergency Appeals vs. Oracle Physical Stock Deficit */}
                 <div className="mt-6 pt-6 border-t border-slate-800">
-                    <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider mb-3 flex items-center gap-2">
-                        <AlertTriangle className="h-4 w-4 text-amber-400" />
-                        2. Emergency Blood Appeals (MongoDB) vs. Physical Unit Stock (Oracle)
-                    </h3>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                        <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                            <AlertTriangle className="h-4 w-4 text-amber-400" />
+                            2. Emergency Blood Appeals (MongoDB) vs. Physical Unit Stock (Oracle)
+                        </h3>
+                        {hybridData?.emergencyStockCrossMatch?.length > 0 && (
+                            <button
+                                onClick={handleDownloadEmergencyStockPDF}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 border border-purple-800/80 text-purple-300 hover:text-purple-200 text-xs font-medium transition"
+                            >
+                                <FileDown className="h-3.5 w-3.5 text-purple-400" />
+                                <span>Export PDF</span>
+                            </button>
+                        )}
+                    </div>
 
                     {hybridLoading ? (
                         <div className="py-8 text-center text-slate-400 text-xs">Computing inventory cross-match...</div>
