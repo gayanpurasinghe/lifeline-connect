@@ -25,10 +25,13 @@ import {
     UserCheck,
     Stethoscope,
     Building2,
-    KeyRound
+    KeyRound,
+    Users,
+    HardDrive
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { UserRole } from '@/lib/auth/session';
+import BackupModal from './BackupModal';
 
 interface NavItem {
     name: string;
@@ -48,6 +51,7 @@ export default function Sidebar() {
     const pathname = usePathname();
     const { user, logout, hasPermission } = useAuth();
     const [mobileOpen, setMobileOpen] = useState(false);
+    const [showBackupModal, setShowBackupModal] = useState(false);
     const [healthStatus, setHealthStatus] = useState<{ oracle: string; mongo: string } | null>(null);
 
     useEffect(() => {
@@ -93,6 +97,14 @@ export default function Sidebar() {
                     icon: Heart,
                     badge: 'Triggers',
                     badgeColor: 'bg-emerald-950/80 text-emerald-300 border-emerald-800/80',
+                    allowedRoles: ['ADMIN', 'CLINICAL_STAFF', 'SCHEMA_OWNER'],
+                },
+                {
+                    name: 'Staff & Volunteers',
+                    href: '/staff',
+                    icon: Users,
+                    badge: 'Personnel',
+                    badgeColor: 'bg-cyan-950/80 text-cyan-300 border-cyan-800/80',
                     allowedRoles: ['ADMIN', 'CLINICAL_STAFF', 'SCHEMA_OWNER'],
                 },
                 {
@@ -342,6 +354,15 @@ export default function Sidebar() {
                         <span>Auth: {user ? user.username : 'Default Pool'}</span>
                         <span className="font-mono text-cyan-400">XEPDB1</span>
                     </div>
+
+                    <button
+                        type="button"
+                        onClick={() => setShowBackupModal(true)}
+                        className="w-full mt-2 py-1.5 px-2.5 rounded-lg bg-gradient-to-r from-rose-950/60 to-slate-800 hover:from-rose-900/60 hover:to-slate-700 border border-rose-800/60 hover:border-rose-700 text-rose-300 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition shadow-sm"
+                    >
+                        <HardDrive className="h-3 w-3 text-rose-400" />
+                        <span>Backup Databases</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -400,6 +421,12 @@ export default function Sidebar() {
             <aside className="hidden md:block w-64 lg:w-72 shrink-0 h-screen sticky top-0 z-30">
                 {sidebarContent}
             </aside>
+
+            {/* Dual-Database Backup Modal */}
+            <BackupModal
+                isOpen={showBackupModal}
+                onClose={() => setShowBackupModal(false)}
+            />
         </>
     );
 }

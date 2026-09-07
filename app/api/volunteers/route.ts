@@ -14,28 +14,28 @@ export async function GET(request: NextRequest) {
         connection = await pool.getConnection();
 
         let sql = `
-            SELECT s.StaffID, s.Name, s.Role, s.Contact, s.Email, s.Status,
-                   COUNT(cs.CampID) AS AssignedCampsCount
-            FROM STAFF s
-            LEFT JOIN CAMP_STAFF cs ON s.StaffID = cs.StaffID
+            SELECT v.VolunteerID, v.Name, v.Contact, v.Email, v.Skills, v.Status,
+                   COUNT(cv.CampID) AS AssignedCampsCount
+            FROM VOLUNTEER v
+            LEFT JOIN CAMP_VOLUNTEER cv ON v.VolunteerID = cv.VolunteerID
         `;
 
         const binds: oracledb.BindParameters = {};
 
         if (statusFilter && statusFilter !== 'ALL') {
-            sql += ` WHERE s.Status = :status`;
+            sql += ` WHERE v.Status = :status`;
             binds['status'] = statusFilter.toUpperCase();
         }
 
         sql += `
-            GROUP BY s.StaffID, s.Name, s.Role, s.Contact, s.Email, s.Status
-            ORDER BY s.StaffID ASC
+            GROUP BY v.VolunteerID, v.Name, v.Contact, v.Email, v.Skills, v.Status
+            ORDER BY v.VolunteerID ASC
         `;
 
         const result = await connection.execute(sql, binds, { outFormat: oracledb.OUT_FORMAT_OBJECT });
         return NextResponse.json({ success: true, data: result.rows || [] });
     } catch (error: any) {
-        console.error('Fetch Staff Error:', error);
+        console.error('Fetch Volunteers Error:', error);
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     } finally {
         if (connection) await connection.close();
@@ -46,61 +46,61 @@ export async function POST(request: NextRequest) {
     let connection;
     try {
         const body = await request.json();
-        const { name, role, contact, email, status = 'ACTIVE' } = body;
+        const { name, contact, email, skills, status = 'ACTIVE' } = body;
 
-        if (!name?.trim() || !role?.trim() || !contact?.trim() || !email?.trim()) {
+        if (!name?.trim() || !contact?.trim()) {
             return NextResponse.json(
-                { success: false, error: 'Staff Name, Role, Contact Phone, and Email are required.' },
+                { success: false, error: 'Volunteer Name and Contact Phone are required.' },
                 { status: 400 }
             );
         }
 
-        const validStatuses = ['ACTIVE', 'INACTIVE', 'ON_LEAVE'];
+        const validStatuses = ['ACTIVE', 'INACTIVE'];
         const finalStatus = validStatuses.includes(status) ? status : 'ACTIVE';
 
         const pool = await getOraclePool();
         connection = await pool.getConnection();
 
         const insertSql = `
-            INSERT INTO STAFF (Name, Role, Contact, Email, Status)
-            VALUES (:name, :role, :contact, :email, :status)
-            RETURNING StaffID INTO :staffId
+            INSERT INTO VOLUNTEER (Name, Contact, Email, Skills, Status)
+            VALUES (:name, :contact, :email, :skills, :status)
+            RETURNING VolunteerID INTO :volunteerId
         `;
 
         const result = await connection.execute(
             insertSql,
             {
                 name: name.trim(),
-                role: role.trim(),
                 contact: contact.trim(),
-                email: email.trim(),
+                email: email?.trim() || null,
+                skills: skills?.trim() || 'General Assistance',
                 status: finalStatus,
-                staffId: { type: oracledb.NUMBER, dir: oracledb.BIND_OUT },
+                volunteerId: { type: oracledb.NUMBER, dir: oracledb.BIND_OUT },
             },
             { autoCommit: true }
         );
 
-        const newStaffId = (result.outBinds as any).staffId[0];
+        const newVolunteerId = (result.outBinds as any).volunteerId[0];
 
         return NextResponse.json({
             success: true,
-            staffId: newStaffId,
-            message: `Staff member '${name.trim()}' added successfully (Staff ID #${newStaffId}).`,
-            staff: {
-                STAFFID: newStaffId,
+            volunteerId: newVolunteerId,
+            message: `Volunteer '${name.trim()}' registered successfully (Volunteer ID #${newVolunteerId}).`,
+            volunteer: {
+                VOLUNTEERID: newVolunteerId,
                 NAME: name.trim(),
-                ROLE: role.trim(),
                 CONTACT: contact.trim(),
-                EMAIL: email.trim(),
+                EMAIL: email?.trim() || null,
+                SKILLS: skills?.trim() || 'General Assistance',
                 STATUS: finalStatus,
             },
         });
     } catch (error: any) {
-        console.error('Add Staff Error:', error);
+        console.error('Add Volunteer Error:', error);
 
         if (error.message?.includes('ORA-00001')) {
             return NextResponse.json(
-                { success: false, error: 'A staff member with this email address already exists.' },
+                { success: false, error: 'A volunteer with this email address already exists.' },
                 { status: 409 }
             );
         }
@@ -114,20 +114,20 @@ export async function PATCH(request: NextRequest) {
     let connection;
     try {
         const body = await request.json();
-        const { staffId, status, role, contact } = body;
+        const { volunteerId, status, skills, contact } = body;
 
-        if (!staffId) {
-            return NextResponse.json({ success: false, error: 'StaffID is required.' }, { status: 400 });
+        if (!volunteerId) {
+            return NextResponse.json({ success: false, error: 'VolunteerID is required.' }, { status: 400 });
         }
 
         const pool = await getOraclePool();
         connection = await pool.getConnection();
 
         const updates: string[] = [];
-        const binds: oracledb.BindParameters = { staffId: Number(staffId) };
+        const binds: oracledb.BindParameters = { volunteerId: Number(volunteerId) };
 
         if (status) {
-            const validStatuses = ['ACTIVE', 'INACTIVE', 'ON_LEAVE'];
+            const validStatuses = ['ACTIVE', 'INACTIVE'];
             if (!validStatuses.includes(status)) {
                 return NextResponse.json({ success: false, error: 'Invalid status value.' }, { status: 400 });
             }
@@ -135,9 +135,9 @@ export async function PATCH(request: NextRequest) {
             binds['status'] = status;
         }
 
-        if (role) {
-            updates.push(`Role = :role`);
-            binds['role'] = role.trim();
+        if (skills) {
+            updates.push(`Skills = :skills`);
+            binds['skills'] = skills.trim();
         }
 
         if (contact) {
@@ -149,15 +149,15 @@ export async function PATCH(request: NextRequest) {
             return NextResponse.json({ success: false, error: 'No fields to update.' }, { status: 400 });
         }
 
-        const updateSql = `UPDATE STAFF SET ${updates.join(', ')} WHERE StaffID = :staffId`;
+        const updateSql = `UPDATE VOLUNTEER SET ${updates.join(', ')} WHERE VolunteerID = :volunteerId`;
         await connection.execute(updateSql, binds, { autoCommit: true });
 
         return NextResponse.json({
             success: true,
-            message: `Staff member #${staffId} updated successfully.`,
+            message: `Volunteer #${volunteerId} updated successfully.`,
         });
     } catch (error: any) {
-        console.error('Update Staff Error:', error);
+        console.error('Update Volunteer Error:', error);
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     } finally {
         if (connection) await connection.close();

@@ -13,7 +13,8 @@ import {
   ArrowRight,
   Server,
   Layers,
-  BookOpen
+  BookOpen,
+  Users
 } from 'lucide-react';
 
 export default function HomePage() {
@@ -58,6 +59,14 @@ export default function HomePage() {
       icon: Truck,
       badge: '3NF Relational',
       badgeColor: 'bg-indigo-950 text-indigo-400 border-indigo-800',
+    },
+    {
+      title: 'Personnel & Volunteer Network',
+      description: 'Directory of medical doctors, phlebotomists, and community volunteers with duty status tracking.',
+      href: '/staff',
+      icon: Users,
+      badge: '3NF Personnel',
+      badgeColor: 'bg-cyan-950 text-cyan-400 border-cyan-800',
     },
     {
       title: 'Emergency Appeals Portal',

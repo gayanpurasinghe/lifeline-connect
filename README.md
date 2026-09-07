@@ -123,12 +123,12 @@ The portal provides an intuitive, high-performance dark-themed management interf
 The relational schema consists of **14 normalized entities** in Third Normal Form (3NF), complete with Primary Keys, Foreign Keys, unique constraints, and check conditions:
 
 1. **VENUE**: Camp hosting facilities with capacity bounds.
-2. **STAFF**: Medical officers, phlebotomists, and administrators.
-3. **VOLUNTEER**: Community assistants tracked with contact details and skills.
+2. **STAFF**: Medical officers, phlebotomists, and administrators (Managed via **[Personnel Hub `/staff`](file:///c:/Users/gayan/OneDrive/Documents/EDU/NIBM/HDSE/sem-2/dm-2/Course_Work/lifeline-connect/app/staff/page.tsx)**).
+3. **VOLUNTEER**: Community assistants tracked with contact details and competencies (Managed via **[Personnel Hub `/staff`](file:///c:/Users/gayan/OneDrive/Documents/EDU/NIBM/HDSE/sem-2/dm-2/Course_Work/lifeline-connect/app/staff/page.tsx)**).
 4. **CAMP**: Blood donation drives with scheduled dates, organizers, and target quotas.
-5. **CAMP_STAFF**: M:N associative junction for medical staff camp rosters.
-6. **CAMP_VOLUNTEER**: M:N associative junction for volunteer duty assignments.
-7. **DONOR**: Voluntary donor profiles and blood group classifications.
+5. **CAMP_STAFF**: M:N associative junction for medical staff camp duty assignments (Managed & tracked via **[Personnel Hub `/staff`](file:///c:/Users/gayan/OneDrive/Documents/EDU/NIBM/HDSE/sem-2/dm-2/Course_Work/lifeline-connect/app/staff/page.tsx)** & **[Camps & Rosters `/camps`](file:///c:/Users/gayan/OneDrive/Documents/EDU/NIBM/HDSE/sem-2/dm-2/Course_Work/lifeline-connect/app/camps/page.tsx)**).
+6. **CAMP_VOLUNTEER**: M:N associative junction for community volunteer duty assignments (Managed & tracked via **[Personnel Hub `/staff`](file:///c:/Users/gayan/OneDrive/Documents/EDU/NIBM/HDSE/sem-2/dm-2/Course_Work/lifeline-connect/app/staff/page.tsx)** & **[Camps & Rosters `/camps`](file:///c:/Users/gayan/OneDrive/Documents/EDU/NIBM/HDSE/sem-2/dm-2/Course_Work/lifeline-connect/app/camps/page.tsx)**).
+7. **DONOR**: Voluntary donor profiles and blood groups (Managed via **[Donor Hub `/donors`](file:///c:/Users/gayan/OneDrive/Documents/EDU/NIBM/HDSE/sem-2/dm-2/Course_Work/lifeline-connect/app/donors/page.tsx)**).
 8. **DONOR_HEALTH**: Point-in-time clinical screenings (weight, hemoglobin, blood pressure).
 9. **DONATION**: Donation events; supports walk-ins (CampID = NULL) and mobile drives.
 10. **BLOOD_UNIT**: Serialized component inventory packets with auto-computed shelf life.
@@ -184,9 +184,20 @@ Located in `resourses/user.sql`:
   * The portal navigation dynamically adapts: modules outside the user's role privilege are visually locked with an **RBAC Lock** indicator, demonstrating role enforcement in viva presentations.
 
 
-### Disaster Recovery & Backup Plan
-* **Automated Backup**: [resourses/backup_strategy.bat](file:///c:/Users/gayan/OneDrive/Documents/EDU/NIBM/HDSE/sem-2/dm-2/Course_Work/lifeline-connect/resourses/backup_strategy.bat) exports the Oracle schema via Data Pump (`expdp`) and dumps MongoDB collections via `mongodump`.
-* **Automated Restore**: [resourses/restore_strategy.bat](file:///c:/Users/gayan/OneDrive/Documents/EDU/NIBM/HDSE/sem-2/dm-2/Course_Work/lifeline-connect/resourses/restore_strategy.bat) recovers Oracle PDB via `impdp table_exists_action=REPLACE` and restores MongoDB via `mongorestore --drop`.
+### 💾 Disaster Recovery & Dual-Database Backup Strategy
+
+LifeLine Connect implements a comprehensive, redundant backup architecture offering both zero-dependency web UI triggers and enterprise CLI scripts:
+
+1. **Interactive Web UI Backup Button & Modal (In-App)**:
+   - **One-Click Backup Access**: Located in both the **Left Navigation Sidebar** (Database Connectivity card) and the **Executive Dashboard** (`/dashboard`).
+   - **Full Dual-Database Snapshot (`POST /api/backup`)**: Simultaneously queries and snapshots all **14 Oracle relational tables** (`VENUE`, `STAFF`, `VOLUNTEER`, `CAMP`, `CAMP_STAFF`, `CAMP_VOLUNTEER`, `DONOR`, `DONOR_HEALTH`, `DONATION`, `BLOOD_UNIT`, `HOSPITAL`, `BLOOD_REQUEST`, `REQUEST_ITEM`, `DISTRIBUTION`) and **3 MongoDB NoSQL collections** (`CampaignMedia`, `Review`, `Appeal`).
+   - **Detailed Visual Verification**: Real-time modal displays individual record counts, storage disk location, and timestamped directory paths.
+   - **JSON Archive Download**: Allows examiners to click **"Download JSON Archive"** to inspect the live data payload directly in browser without requiring external database tools.
+
+2. **Enterprise Command-Line Backup Scripts (Rubric Compliance)**:
+   - **Automated Backup**: [resourses/backup_strategy.bat](file:///c:/Users/gayan/OneDrive/Documents/EDU/NIBM/HDSE/sem-2/dm-2/Course_Work/lifeline-connect/resourses/backup_strategy.bat) exports the Oracle schema via Data Pump (`expdp`) into `DATA_PUMP_DIR` and dumps MongoDB collections via `mongodump` into timestamped backup folders (`resourses/backups/backup_YYYYMMDD_HHMMSS/`).
+   - **Automated Disaster Recovery**: [resourses/restore_strategy.bat](file:///c:/Users/gayan/OneDrive/Documents/EDU/NIBM/HDSE/sem-2/dm-2/Course_Work/lifeline-connect/resourses/restore_strategy.bat) executes an Oracle Data Pump restore via `impdp table_exists_action=REPLACE` and full MongoDB collection restoration via `mongorestore --drop`.
+
 
 ---
 
