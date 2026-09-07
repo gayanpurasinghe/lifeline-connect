@@ -2,12 +2,90 @@ import { NextResponse } from 'next/server';
 import oracledb from 'oracledb';
 import { cookies } from 'next/headers';
 import { UserRole, UserSession, encodeSession, SESSION_COOKIE_NAME } from '@/lib/auth/session';
+import { getOraclePool } from '@/lib/db/oracle';
 
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { username, password } = body;
+        const { username, password, authType = 'ORACLE_PDB' } = body;
 
+        if (authType === 'DONOR') {
+            const trimmedIdentifier = (username || '').trim();
+            if (!trimmedIdentifier) {
+                return NextResponse.json(
+                    { success: false, error: 'Donor Email or Donor ID is required.' },
+                    { status: 400 }
+                );
+            }
+
+            let connection;
+            try {
+                const pool = await getOraclePool();
+                connection = await pool.getConnection();
+
+                const donorSql = `
+                    SELECT 
+                        d.DonorID,
+                        d.Name,
+                        d.BloodGroup,
+                        d.Contact,
+                        d.Email,
+                        d.Address,
+                        d.Status,
+                        TO_CHAR(d.RegistrationDate, 'YYYY-MM-DD') AS RegDate
+                    FROM DONOR d
+                    WHERE LOWER(d.Email) = LOWER(:ident) 
+                       OR TO_CHAR(d.DonorID) = :ident 
+                       OR d.Contact = :ident
+                `;
+
+                const res = await connection.execute(donorSql, { ident: trimmedIdentifier }, { outFormat: oracledb.OUT_FORMAT_OBJECT });
+                if (!res.rows || res.rows.length === 0) {
+                    return NextResponse.json(
+                        { success: false, error: `No registered donor found matching "${trimmedIdentifier}". Please check your email or Donor ID.` },
+                        { status: 404 }
+                    );
+                }
+
+                const donorRow = res.rows[0] as any;
+                const donorSession: UserSession = {
+                    username: donorRow.EMAIL || `donor_${donorRow.DONORID}`,
+                    role: 'DONOR',
+                    oracleRoles: ['DONOR_PORTAL'],
+                    displayName: donorRow.NAME,
+                    loginTime: new Date().toISOString(),
+                    donorId: donorRow.DONORID,
+                    bloodGroup: donorRow.BLOODGROUP,
+                    email: donorRow.EMAIL,
+                    contact: donorRow.CONTACT,
+                    address: donorRow.ADDRESS,
+                };
+
+                const cookieStore = await cookies();
+                cookieStore.set(SESSION_COOKIE_NAME, encodeSession(donorSession), {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production',
+                    sameSite: 'lax',
+                    path: '/',
+                    maxAge: 60 * 60 * 8,
+                });
+
+                return NextResponse.json({
+                    success: true,
+                    user: donorSession,
+                });
+            } catch (dbErr: any) {
+                console.error('Donor Auth Database Error:', dbErr);
+                return NextResponse.json(
+                    { success: false, error: `Database error during donor verification: ${dbErr.message}` },
+                    { status: 500 }
+                );
+            } finally {
+                if (connection) await connection.close();
+            }
+        }
+
+        // ORACLE PDB ROLE-BASED AUTHENTICATION 
         if (!username || !password) {
             return NextResponse.json(
                 { success: false, error: 'Username and password are required' },
@@ -18,7 +96,7 @@ export async function POST(req: Request) {
         const trimmedUser = username.trim();
         const connectString = process.env.ORACLE_CONN_STR || 'localhost:1521/XEPDB1';
 
-        // 1. Authenticate against Oracle PDB directly with provided credentials
+        // Authenticate against Oracle PDB directly with provided credentials
         let connection: oracledb.Connection;
         try {
             connection = await oracledb.getConnection({
@@ -45,7 +123,7 @@ export async function POST(req: Request) {
             );
         }
 
-        // 2. Resolve assigned Oracle Database Roles from USER_ROLE_PRIVS
+        // Resolve assigned Oracle Database Roles from USER_ROLE_PRIVS
         let oracleRoles: string[] = [];
         try {
             const roleQuery = await connection.execute<{ GRANTED_ROLE: string }>(
@@ -62,9 +140,11 @@ export async function POST(req: Request) {
             await connection.close();
         }
 
-        // 3. Map Oracle Database Roles to Portal Roles
+        // Map Oracle Database Roles to Portal Roles
         let role: UserRole = 'CLINICAL_STAFF';
         let displayName = trimmedUser;
+        let donorId: number | undefined;
+        let bloodGroup: string | undefined;
 
         const upperUser = trimmedUser.toUpperCase();
         if (upperUser === 'LIFELINE_CONNECT') {
@@ -80,6 +160,11 @@ export async function POST(req: Request) {
         } else if (oracleRoles.includes('RL_CLINICAL_STAFF') || upperUser === 'STAFF_USER') {
             role = 'CLINICAL_STAFF';
             displayName = 'Clinical Screening Officer';
+        } else if (oracleRoles.includes('RL_DONOR_PORTAL') || upperUser === 'DONOR_USER') {
+            role = 'DONOR';
+            displayName = 'Registered Donor (Oracle User)';
+            donorId = 1;
+            bloodGroup = 'O+';
         }
 
         const session: UserSession = {
@@ -88,9 +173,10 @@ export async function POST(req: Request) {
             oracleRoles,
             displayName,
             loginTime: new Date().toISOString(),
+            donorId,
+            bloodGroup,
         };
 
-        // 4. Set session cookie
         const cookieStore = await cookies();
         cookieStore.set(SESSION_COOKIE_NAME, encodeSession(session), {
             httpOnly: true,

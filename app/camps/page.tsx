@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useAuth } from '@/lib/auth/AuthContext';
 import {
     Calendar,
     MapPin,
@@ -19,7 +21,9 @@ import {
     X,
     Building2,
     Target,
-    AlertCircle
+    AlertCircle,
+    Heart,
+    ArrowRight
 } from 'lucide-react';
 
 interface Camp {
@@ -94,6 +98,7 @@ interface OrganizerOption {
 }
 
 export default function CampsPage() {
+    const { user } = useAuth();
     const [camps, setCamps] = useState<Camp[]>([]);
     const [venues, setVenues] = useState<VenueOption[]>([]);
     const [organizers, setOrganizers] = useState<OrganizerOption[]>([]);
@@ -104,11 +109,17 @@ export default function CampsPage() {
     const [loading, setLoading] = useState(true);
 
     // Review form state
-    const [donorName, setDonorName] = useState('');
+    const [donorName, setDonorName] = useState(user?.displayName || '');
     const [rating, setRating] = useState('5');
     const [feedback, setFeedback] = useState('');
     const [waitingTime, setWaitingTime] = useState('15');
     const [submitting, setSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (user?.displayName && !donorName) {
+            setDonorName(user.displayName);
+        }
+    }, [user]);
 
     // Schedule Camp Modal State
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -423,6 +434,31 @@ export default function CampsPage() {
                         </button>
                     </div>
                 </div>
+
+                {user?.role === 'DONOR' && (
+                    <div className="mt-4 p-4 rounded-2xl bg-gradient-to-r from-rose-950/60 to-slate-900 border border-rose-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-xl bg-rose-600 text-white shadow-md">
+                                <Heart className="w-5 h-5 fill-white" />
+                            </div>
+                            <div>
+                                <div className="text-xs font-bold text-white">
+                                    Welcome, {user.displayName}! (Donor #{user.donorId} • Blood Group {user.bloodGroup})
+                                </div>
+                                <div className="text-[11px] text-slate-400">
+                                    You are viewing upcoming regional blood camps. You can pledge attendance and view your past donations.
+                                </div>
+                            </div>
+                        </div>
+                        <Link
+                            href="/donor-portal?tab=history"
+                            className="px-4 py-2 text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white rounded-xl transition shadow flex items-center justify-center gap-1.5 shrink-0"
+                        >
+                            View My Donation History
+                            <ArrowRight className="w-3.5 h-3.5" />
+                        </Link>
+                    </div>
+                )}
             </div>
 
             {/* MongoDB Top-Rated Camps Leaderboard */}

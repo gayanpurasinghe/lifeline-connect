@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useAuth } from '@/lib/auth/AuthContext';
 import {
     HeartPulse,
     UserCheck,
@@ -18,7 +20,9 @@ import {
     Calendar,
     Activity,
     Info,
-    Shield
+    Shield,
+    ArrowRight,
+    Heart
 } from 'lucide-react';
 
 interface DonorRecord {
@@ -37,6 +41,7 @@ interface DonorRecord {
 }
 
 export default function DonorsPage() {
+    const { user } = useAuth();
     const [donors, setDonors] = useState<DonorRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
@@ -178,6 +183,31 @@ export default function DonorsPage() {
                     </button>
                 </div>
             </div>
+
+            {user?.role === 'DONOR' && (
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-rose-950/60 to-slate-900 border border-rose-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-xl bg-rose-600 text-white shadow">
+                            <Heart className="w-5 h-5 fill-white" />
+                        </div>
+                        <div>
+                            <div className="text-xs font-bold text-white">
+                                Logged in as Donor: {user.displayName} (Donor #{user.donorId} • Blood Group {user.bloodGroup})
+                            </div>
+                            <div className="text-[11px] text-slate-400">
+                                View your personal donation records, clinical vital evaluations, and official PDF certificate.
+                            </div>
+                        </div>
+                    </div>
+                    <Link
+                        href="/donor-portal?tab=history"
+                        className="px-4 py-2 text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white rounded-xl transition shadow flex items-center justify-center gap-1.5 shrink-0"
+                    >
+                        Open My Donor Portal
+                        <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                </div>
+            )}
 
             {/* Notification Banner */}
             {statusBanner && (

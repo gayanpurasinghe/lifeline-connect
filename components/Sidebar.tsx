@@ -68,6 +68,35 @@ export default function Sidebar() {
 
     const navSections: NavSection[] = [
         {
+            title: 'DONOR SERVICES',
+            items: [
+                {
+                    name: 'Donor Portal Hub',
+                    href: '/donor-portal',
+                    icon: Heart,
+                    badge: 'Personal',
+                    badgeColor: 'bg-rose-950/80 text-rose-300 border-rose-800/80',
+                    allowedRoles: ['DONOR', 'ADMIN', 'CLINICAL_STAFF', 'SCHEMA_OWNER'],
+                },
+                {
+                    name: 'Upcoming Camps',
+                    href: '/donor-portal?tab=camps',
+                    icon: Calendar,
+                    badge: 'Drives',
+                    badgeColor: 'bg-amber-950/80 text-amber-300 border-amber-800/80',
+                    allowedRoles: ['DONOR', 'ADMIN', 'CLINICAL_STAFF', 'SCHEMA_OWNER'],
+                },
+                {
+                    name: 'My Donation History',
+                    href: '/donor-portal?tab=history',
+                    icon: Activity,
+                    badge: 'PL/SQL',
+                    badgeColor: 'bg-emerald-950/80 text-emerald-300 border-emerald-800/80',
+                    allowedRoles: ['DONOR', 'ADMIN', 'CLINICAL_STAFF', 'SCHEMA_OWNER'],
+                },
+            ],
+        },
+        {
             title: 'OVERVIEW',
             items: [
                 { name: 'Portal Home', href: '/', icon: Home },
@@ -89,7 +118,7 @@ export default function Sidebar() {
                     icon: Calendar,
                     badge: 'Hybrid',
                     badgeColor: 'bg-amber-950/80 text-amber-300 border-amber-800/80',
-                    allowedRoles: ['ADMIN', 'CLINICAL_STAFF', 'SCHEMA_OWNER'],
+                    allowedRoles: ['ADMIN', 'CLINICAL_STAFF', 'SCHEMA_OWNER', 'DONOR'],
                 },
                 {
                     name: 'Donors & Intake',
@@ -126,7 +155,7 @@ export default function Sidebar() {
                     icon: AlertTriangle,
                     badge: 'Live Q&A',
                     badgeColor: 'bg-amber-950/80 text-amber-300 border-amber-800/80',
-                    allowedRoles: ['ADMIN', 'HOSPITAL_COORDINATOR', 'CLINICAL_STAFF', 'SCHEMA_OWNER'],
+                    allowedRoles: ['ADMIN', 'HOSPITAL_COORDINATOR', 'CLINICAL_STAFF', 'SCHEMA_OWNER', 'DONOR'],
                 },
                 {
                     name: 'Media & Guidelines',
@@ -141,6 +170,12 @@ export default function Sidebar() {
 
     const getRoleBadgeInfo = (role?: UserRole) => {
         switch (role) {
+            case 'DONOR':
+                return {
+                    label: user?.donorId ? `DONOR #${user.donorId}` : 'DONOR PORTAL',
+                    bg: 'bg-rose-950/90 text-rose-300 border-rose-800/80',
+                    icon: Heart,
+                };
             case 'ADMIN':
             case 'SCHEMA_OWNER':
                 return {
@@ -291,7 +326,13 @@ export default function Sidebar() {
                         </div>
 
                         <div className="flex items-center justify-between pt-2 border-t border-slate-800/80 text-[10px]">
-                            <span className="text-slate-400">Role:</span>
+                            <span className="text-slate-400">
+                                {user.bloodGroup ? (
+                                    <span className="text-rose-400 font-bold font-mono">Type: {user.bloodGroup}</span>
+                                ) : (
+                                    'Role:'
+                                )}
+                            </span>
                             <span className={`px-2 py-0.5 rounded-md border font-mono font-bold text-[9px] ${roleBadge.bg}`}>
                                 {roleBadge.label}
                             </span>
