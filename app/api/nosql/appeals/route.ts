@@ -15,7 +15,8 @@ export async function GET(request: NextRequest) {
         if (bloodGroup) filter.bloodGroup = bloodGroup;
 
         if (keyword && keyword.trim() !== '') {
-            const regex = new RegExp(keyword.trim(), 'i');
+            const escaped = keyword.trim().replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+            const regex = new RegExp(escaped, 'i');
             filter.$or = [
                 { hospitalName: regex },
                 { location: regex },

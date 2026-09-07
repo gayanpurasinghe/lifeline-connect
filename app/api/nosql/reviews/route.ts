@@ -10,7 +10,8 @@ export async function GET(request: NextRequest) {
         const { searchParams } = request.nextUrl;
         const campId = searchParams.get('campId');
 
-        const filter = campId ? { campId: Number(campId) } : {};
+        const parsedCampId = campId ? parseInt(campId, 10) : NaN;
+        const filter = !isNaN(parsedCampId) ? { campId: parsedCampId } : {};
         const reviews = await Review.find(filter).sort({ createdAt: -1 }).lean();
 
         return NextResponse.json({ success: true, count: reviews.length, data: reviews });
