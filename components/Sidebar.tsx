@@ -45,6 +45,8 @@ interface NavItem {
 interface NavSection {
     title: string;
     items: NavItem[];
+    allowedRoles?: UserRole[];
+    hideForRoles?: UserRole[];
 }
 
 export default function Sidebar() {
@@ -69,6 +71,8 @@ export default function Sidebar() {
     const navSections: NavSection[] = [
         {
             title: 'DONOR SERVICES',
+            hideForRoles: ['ADMIN', 'CLINICAL_STAFF', 'HOSPITAL_COORDINATOR', 'SCHEMA_OWNER'],
+            allowedRoles: ['DONOR'],
             items: [
                 {
                     name: 'Donor Portal Hub',
@@ -76,7 +80,7 @@ export default function Sidebar() {
                     icon: Heart,
                     badge: 'Personal',
                     badgeColor: 'bg-rose-950/80 text-rose-300 border-rose-800/80',
-                    allowedRoles: ['DONOR', 'ADMIN', 'CLINICAL_STAFF', 'SCHEMA_OWNER'],
+                    allowedRoles: ['DONOR'],
                 },
                 {
                     name: 'Upcoming Camps',
@@ -84,7 +88,7 @@ export default function Sidebar() {
                     icon: Calendar,
                     badge: 'Drives',
                     badgeColor: 'bg-amber-950/80 text-amber-300 border-amber-800/80',
-                    allowedRoles: ['DONOR', 'ADMIN', 'CLINICAL_STAFF', 'SCHEMA_OWNER'],
+                    allowedRoles: ['DONOR'],
                 },
                 {
                     name: 'My Donation History',
@@ -92,7 +96,7 @@ export default function Sidebar() {
                     icon: Activity,
                     badge: 'PL/SQL',
                     badgeColor: 'bg-emerald-950/80 text-emerald-300 border-emerald-800/80',
-                    allowedRoles: ['DONOR', 'ADMIN', 'CLINICAL_STAFF', 'SCHEMA_OWNER'],
+                    allowedRoles: ['DONOR'],
                 },
             ],
         },
@@ -207,8 +211,23 @@ export default function Sidebar() {
     const roleBadge = getRoleBadgeInfo(user?.role);
     const RoleIcon = roleBadge.icon;
 
+    const visibleSections = navSections.filter((section) => {
+        // If hidden for the user's role (e.g. staff and admins should not see donor services)
+        if (user && section.hideForRoles?.includes(user.role)) {
+            return false;
+        }
+        // If allowed only for specific roles
+        if (section.allowedRoles && user && !section.allowedRoles.includes(user.role)) {
+            return false;
+        }
+        return true;
+    });
+
     const sidebarContent = (
-        <div className="flex flex-col h-full bg-slate-950 border-r border-slate-800/80 text-slate-200 select-none">
+        <div
+            className="flex flex-col h-full bg-slate-950 border-r border-slate-800/80 text-slate-200 select-none"
+            style={{ colorScheme: 'dark' }}
+        >
             {/* Brand Header */}
             <div className="p-5 border-b border-slate-800/80">
                 <Link href="/" className="flex items-center gap-3 group">
@@ -228,8 +247,11 @@ export default function Sidebar() {
             </div>
 
             {/* Navigation Groups */}
-            <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
-                {navSections.map((section) => (
+            <div
+                className="flex-1 overflow-y-auto px-3 py-4 space-y-6 custom-scrollbar"
+                style={{ colorScheme: 'dark' }}
+            >
+                {visibleSections.map((section) => (
                     <div key={section.title}>
                         <div className="px-3 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                             {section.title}
