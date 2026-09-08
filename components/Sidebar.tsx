@@ -45,6 +45,8 @@ interface NavItem {
 interface NavSection {
     title: string;
     items: NavItem[];
+    allowedRoles?: UserRole[];
+    hideForRoles?: UserRole[];
 }
 
 export default function Sidebar() {
@@ -68,6 +70,37 @@ export default function Sidebar() {
 
     const navSections: NavSection[] = [
         {
+            title: 'DONOR SERVICES',
+            hideForRoles: ['ADMIN', 'CLINICAL_STAFF', 'HOSPITAL_COORDINATOR', 'SCHEMA_OWNER'],
+            allowedRoles: ['DONOR'],
+            items: [
+                {
+                    name: 'Donor Portal Hub',
+                    href: '/donor-portal',
+                    icon: Heart,
+                    badge: 'Personal',
+                    badgeColor: 'bg-rose-950/80 text-rose-300 border-rose-800/80',
+                    allowedRoles: ['DONOR'],
+                },
+                {
+                    name: 'Upcoming Camps',
+                    href: '/donor-portal?tab=camps',
+                    icon: Calendar,
+                    badge: 'Drives',
+                    badgeColor: 'bg-amber-950/80 text-amber-300 border-amber-800/80',
+                    allowedRoles: ['DONOR'],
+                },
+                {
+                    name: 'My Donation History',
+                    href: '/donor-portal?tab=history',
+                    icon: Activity,
+                    badge: 'PL/SQL',
+                    badgeColor: 'bg-emerald-950/80 text-emerald-300 border-emerald-800/80',
+                    allowedRoles: ['DONOR'],
+                },
+            ],
+        },
+        {
             title: 'OVERVIEW',
             items: [
                 { name: 'Portal Home', href: '/', icon: Home },
@@ -89,7 +122,7 @@ export default function Sidebar() {
                     icon: Calendar,
                     badge: 'Hybrid',
                     badgeColor: 'bg-amber-950/80 text-amber-300 border-amber-800/80',
-                    allowedRoles: ['ADMIN', 'CLINICAL_STAFF', 'SCHEMA_OWNER'],
+                    allowedRoles: ['ADMIN', 'CLINICAL_STAFF', 'SCHEMA_OWNER', 'DONOR'],
                 },
                 {
                     name: 'Donors & Intake',
@@ -126,7 +159,7 @@ export default function Sidebar() {
                     icon: AlertTriangle,
                     badge: 'Live Q&A',
                     badgeColor: 'bg-amber-950/80 text-amber-300 border-amber-800/80',
-                    allowedRoles: ['ADMIN', 'HOSPITAL_COORDINATOR', 'CLINICAL_STAFF', 'SCHEMA_OWNER'],
+                    allowedRoles: ['ADMIN', 'HOSPITAL_COORDINATOR', 'CLINICAL_STAFF', 'SCHEMA_OWNER', 'DONOR'],
                 },
                 {
                     name: 'Media & Guidelines',
@@ -141,6 +174,12 @@ export default function Sidebar() {
 
     const getRoleBadgeInfo = (role?: UserRole) => {
         switch (role) {
+            case 'DONOR':
+                return {
+                    label: user?.donorId ? `DONOR #${user.donorId}` : 'DONOR PORTAL',
+                    bg: 'bg-rose-950/90 text-rose-300 border-rose-800/80',
+                    icon: Heart,
+                };
             case 'ADMIN':
             case 'SCHEMA_OWNER':
                 return {
@@ -172,8 +211,23 @@ export default function Sidebar() {
     const roleBadge = getRoleBadgeInfo(user?.role);
     const RoleIcon = roleBadge.icon;
 
+    const visibleSections = navSections.filter((section) => {
+        // If hidden for the user's role (e.g. staff and admins should not see donor services)
+        if (user && section.hideForRoles?.includes(user.role)) {
+            return false;
+        }
+        // If allowed only for specific roles
+        if (section.allowedRoles && user && !section.allowedRoles.includes(user.role)) {
+            return false;
+        }
+        return true;
+    });
+
     const sidebarContent = (
-        <div className="flex flex-col h-full bg-slate-950 border-r border-slate-800/80 text-slate-200 select-none">
+        <div
+            className="flex flex-col h-full bg-slate-950 border-r border-slate-800/80 text-slate-200 select-none"
+            style={{ colorScheme: 'dark' }}
+        >
             {/* Brand Header */}
             <div className="p-5 border-b border-slate-800/80">
                 <Link href="/" className="flex items-center gap-3 group">
@@ -193,8 +247,11 @@ export default function Sidebar() {
             </div>
 
             {/* Navigation Groups */}
-            <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
-                {navSections.map((section) => (
+            <div
+                className="flex-1 overflow-y-auto px-3 py-4 space-y-6 custom-scrollbar"
+                style={{ colorScheme: 'dark' }}
+            >
+                {visibleSections.map((section) => (
                     <div key={section.title}>
                         <div className="px-3 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                             {section.title}
@@ -291,7 +348,13 @@ export default function Sidebar() {
                         </div>
 
                         <div className="flex items-center justify-between pt-2 border-t border-slate-800/80 text-[10px]">
-                            <span className="text-slate-400">Role:</span>
+                            <span className="text-slate-400">
+                                {user.bloodGroup ? (
+                                    <span className="text-rose-400 font-bold font-mono">Type: {user.bloodGroup}</span>
+                                ) : (
+                                    'Role:'
+                                )}
+                            </span>
                             <span className={`px-2 py-0.5 rounded-md border font-mono font-bold text-[9px] ${roleBadge.bg}`}>
                                 {roleBadge.label}
                             </span>

@@ -31,7 +31,8 @@ export async function GET(
                 break;
 
             case 'expiring-inventory':
-                const days = parseInt(searchParams.get('days') || '30', 10);
+                const rawDays = parseInt(searchParams.get('days') || '30', 10);
+                const days = isNaN(rawDays) || rawDays < 1 ? 30 : rawDays;
                 plsqlBlock = `BEGIN LIFELINE_REPORTS_PKG.GET_EXPIRING_INVENTORY(:p_days_ahead, :p_cursor); END;`;
                 binds = {
                     p_days_ahead: days,
@@ -40,7 +41,8 @@ export async function GET(
                 break;
 
             case 'donor-history':
-                const donorId = parseInt(searchParams.get('donorId') || '1', 10);
+                const rawId = parseInt(searchParams.get('donorId') || '1', 10);
+                const donorId = isNaN(rawId) || rawId < 1 ? 1 : rawId;
                 plsqlBlock = `BEGIN LIFELINE_REPORTS_PKG.GET_DONOR_HISTORY_REPORT(:p_donor_id, :p_cursor); END;`;
                 binds = {
                     p_donor_id: donorId,

@@ -1,4 +1,4 @@
-export type UserRole = 'ADMIN' | 'CLINICAL_STAFF' | 'HOSPITAL_COORDINATOR' | 'SCHEMA_OWNER';
+export type UserRole = 'ADMIN' | 'CLINICAL_STAFF' | 'HOSPITAL_COORDINATOR' | 'SCHEMA_OWNER' | 'DONOR';
 
 export interface UserSession {
     username: string;
@@ -6,6 +6,11 @@ export interface UserSession {
     oracleRoles: string[];
     displayName: string;
     loginTime: string;
+    donorId?: number;
+    bloodGroup?: string;
+    email?: string;
+    contact?: string;
+    address?: string;
 }
 
 export const SESSION_COOKIE_NAME = 'lifeline_session';

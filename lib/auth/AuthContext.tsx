@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 interface AuthContextType {
     user: UserSession | null;
     loading: boolean;
-    login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
+    login: (username: string, password?: string, authType?: 'ORACLE_PDB' | 'DONOR') => Promise<{ success: boolean; user?: UserSession; error?: string }>;
     logout: () => Promise<void>;
     hasPermission: (allowedRoles?: UserRole[]) => boolean;
 }
@@ -34,17 +34,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .finally(() => setLoading(false));
     }, []);
 
-    const login = async (username: string, password: string) => {
+    const login = async (username: string, password?: string, authType: 'ORACLE_PDB' | 'DONOR' = 'ORACLE_PDB') => {
         try {
             const res = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password }),
+                body: JSON.stringify({ username, password, authType }),
             });
             const data = await res.json();
             if (data.success && data.user) {
                 setUser(data.user);
-                return { success: true };
+                return { success: true, user: data.user };
             }
             return { success: false, error: data.error || 'Authentication failed' };
         } catch (err: any) {
